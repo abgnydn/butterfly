@@ -1,0 +1,14 @@
+{
+  "name": "butterfly",
+  "version": "0.0.1",
+  "description": "Falsifier: does a rebuilt (metamorphosed) context preserve facts as well as the full transcript?",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node experiment.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "openai": "^6.34.0"
+  }
+}
