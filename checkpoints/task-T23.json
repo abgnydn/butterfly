@@ -1,0 +1,75 @@
+{
+  "id": "T23",
+  "topic": "missing await on async function call causing promise to resolve after assertion",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1189
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 278
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 663
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 304
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 591
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 201
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1189
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 353
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 732
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 379
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 659
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 358
+    }
+  ],
+  "butterfly_answer": "Missing `await` on an async call inside `registerUser` test, and the test function itself wasn't marked `async`. The promise was floating, so the assertion ran before the operation completed — causing intermittent failures.",
+  "lastN_answer": "The prior context doesn't mention a root cause for anything — the conversation covered Jest log noise, linting config, and type narrowing, but no root cause was identified or discussed.",
+  "needle_fact": "In src/test/register.test.js line 3, the test called registerUser('user@example.com', 'pw123') without await, so `user` was the unresolved Promise from the async function and `user.email` was undefined; the assertion error surfaced as an unhandled rejection after Mocha had already marked the test as passing.",
+  "completed_at": "2026-04-24T19:31:28.522Z"
+}

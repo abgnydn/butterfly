@@ -1,0 +1,243 @@
+{
+  "n_generations": 3,
+  "target_tokens": 400,
+  "binary": {
+    "butterfly": 0.6666666666666666,
+    "lastN": 0
+  },
+  "rubric_mean": {
+    "butterfly": 1,
+    "lastN": 0
+  },
+  "rubric_any_preservation": {
+    "butterfly": 1,
+    "lastN": 0
+  },
+  "rows": [
+    {
+      "id": "T01",
+      "topic": "timing race — same clock function called twice across an assertion boundary",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 944
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 555
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 901
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 335
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 668
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 330
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 944
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 396
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 735
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 372
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 699
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 391
+        }
+      ],
+      "butterfly_answer": "Two `time.Now()` calls in a single logical op created a lost-time window between them. Fix: cache one `now` and advance `lastRefill` by `refill*interval` (same pattern applied to `LeakyBucket.tryAcquire` with `lastLeak` / `leaked*leakInterval`).",
+      "lastN_answer": "The prior context doesn't state an actual root cause for anything — the conversation covered a typo, quote style, CI build time (attributed to deps + duplicate type-check, but not framed as a \"root cause\"), naming preference, and another typo. No specific bug or incident with a root cause was discus",
+      "needle_fact": "In TokenBucket.allow(), time.Now() was called twice — once to compute elapsed and once to assign b.lastRefill — so on a loaded CI box the gap between the two calls (3+ms) was silently dropped from the refill accounting, leaving the bucket empty on the next call.",
+      "butterfly_rubric": 1,
+      "lastN_rubric": 0
+    },
+    {
+      "id": "T02",
+      "topic": "off-by-one error in a loop bound in CSV chunk processor",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 998
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 573
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 921
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 322
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 701
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 358
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 998
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 372
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 714
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 342
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 714
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 372
+        }
+      ],
+      "butterfly_answer": "Off-by-one in `src/ingest/chunker.py:6`: `end = min(start+chunk_size, n-1)` used `n-1` instead of `n`, so the last character of each chunk body was dropped (right count, wrong contents).",
+      "lastN_answer": "No root cause was identified in the prior context. We discussed the CI time jump (4→7 min) and I speculated it was likely the snapshot suite growing after a design-system bump, but that was a guess, not a diagnosed root cause.",
+      "needle_fact": "In src/ingest/chunker.py, iter_chunks computed the slice upper bound as `end = min(start + chunk_size, n - 1)` — the `n - 1` was wrong because Python slicing is half-open, so `rows[start:end]` excludes index `end`; the correct clamp is `n`, and the `- 1` was dropping the final row of every file.",
+      "butterfly_rubric": 1,
+      "lastN_rubric": 0
+    },
+    {
+      "id": "T03",
+      "topic": "missing await on async function call causes assertion to run before promise resolves",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1054
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 443
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 768
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 347
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 723
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 300
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1054
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 358
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 676
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 369
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 738
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 388
+        }
+      ],
+      "butterfly_answer": "Floating promise in `src/db/index.js` `insert()` — `cache.refresh(id)` wasn't awaited, so tests could read the cache before it was populated.",
+      "lastN_answer": "No root cause was discussed in the prior context. We talked about four separate things — import ordering (backlogged), slow CI builds (you'll look next week), a typo above `getUserPrefs` (separate PR), and logger.info vs logger.debug conventions — but none of them got to a diagnosed root cause.",
+      "needle_fact": "db.insert in src/db/index.js called the async cache.refresh(id) without awaiting it, so db.insert returned before index.set(id, row) ran; the intermittent test failure came from the test's getter reading index.get(this.id)?.name before the floating promise resolved.",
+      "butterfly_rubric": 1,
+      "lastN_rubric": 0
+    }
+  ]
+}

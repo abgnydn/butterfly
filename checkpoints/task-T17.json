@@ -1,0 +1,75 @@
+{
+  "id": "T17",
+  "topic": "memory leak — closure capturing large object inside a setInterval that's never cleared",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1230
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 317
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 685
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 293
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 583
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 223
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1230
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 349
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 710
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 388
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 671
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 387
+    }
+  ],
+  "butterfly_answer": "The `setInterval` heartbeat in `src/ws/session.js` was never cleared when the session closed. Its closure held a reference to `sessionState` (~2MB), so every closed session leaked that memory — the interval kept running and the GC couldn't collect the state.",
+  "lastN_answer": "The prior context doesn't mention a root cause — the conversation was entirely about code quality items (error messages, naming, dependencies, test file size, eslint). No bug or incident root cause came up.",
+  "needle_fact": "The setInterval heartbeat in onConnection (src/ws/session.js) is never cleared on socket close — its closure captures sessionState, retaining the ~2MB initialPayload buffer per disconnected session.",
+  "completed_at": "2026-04-24T19:14:15.341Z"
+}

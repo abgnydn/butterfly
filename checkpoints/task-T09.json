@@ -1,0 +1,75 @@
+{
+  "id": "T09",
+  "topic": "null vs undefined check confusion — `if (x !== null)` letting undefined through",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1045
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 238
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 672
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 229
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 574
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 252
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1045
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 347
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 774
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 342
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 680
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 355
+    }
+  ],
+  "butterfly_answer": "`tsconfig.base.json` had `\"strictNullChecks\": false`, which overrode the project-level `\"strict\": true`. That meant `undefined` wasn't caught as a type error, so the `!== null` guard in `UserProfile.tsx` let `undefined` slip through to `user.handle.toLowerCase()`, causing the crash.",
+  "lastN_answer": "The prior context doesn't identify a specific \"root cause\" for anything — the conversation was high-level observations across several topics (logging inconsistency, duplicate util files, build warnings, Prettier gaps) without drilling into any particular root cause for any of them.\n\nWhich issue were",
+  "needle_fact": "The guard `if (user.handle !== null)` in normalizeHandle() let undefined values through because `handle` was typed `string | null | undefined`, and the bug went unnoticed because tsconfig.base.json had `strictNullChecks: false` overriding the project's `strict: true`.",
+  "completed_at": "2026-04-24T18:52:07.773Z"
+}

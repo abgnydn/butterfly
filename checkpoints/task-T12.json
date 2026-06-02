@@ -1,0 +1,75 @@
+{
+  "id": "T12",
+  "topic": "off-by-one error in a loop bound (<= vs <)",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 919
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 254
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 507
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 165
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 479
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 140
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 919
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 359
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 605
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 329
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 636
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 365
+    }
+  ],
+  "butterfly_answer": "Off-by-one in `process_batch` (`etl/pipeline.py:87`): `range(n+1)` iterated `n+1` times instead of `n`, so the last iteration processed an out-of-bounds index. Fixed by changing to `range(n)`.",
+  "lastN_answer": "The prior context doesn't state what the root cause was — the conversation was entirely tangents. Never surfaced.",
+  "needle_fact": "The root cause was that a PR titled 'fix: ensure last record processed' changed `for i in range(n)` to `for i in range(n + 1)` in process_batch at etl/pipeline.py:87, based on a misunderstanding of Python's half-open range semantics — `range(n)` already covers all valid indices 0..n-1 of a list of length n, so the change caused an IndexError on `records[n]`. The bug was missed by tests because test_process_batch used a MagicMock whose __getitem__ returned a valid value for any index.",
+  "completed_at": "2026-04-24T19:00:15.189Z"
+}

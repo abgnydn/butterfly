@@ -1,0 +1,49 @@
+{
+  "n_tasks": 3,
+  "valid": 3,
+  "butterfly_completion": 1,
+  "lastN_completion": 1,
+  "head_to_head": {
+    "wins": 0,
+    "losses": 0,
+    "ties": 3
+  },
+  "rows": [
+    {
+      "id": "T01",
+      "topic": "timing race — same clock function called twice across an assertion boundary",
+      "full_tokens": 997,
+      "butterfly_tokens": 780,
+      "lastN_tokens": 810,
+      "butterfly": 1,
+      "lastN": 1,
+      "butterfly_answer": "Two `time.Now()` calls in one logical operation. The gap between them is lost time — never counted toward any refill window — which on a loaded CI box could exceed the interval and leave the bucket em",
+      "lastN_answer": "Two separate `time.Now()` calls inside one logical refill operation. Elapsed was computed against the first reading, but `lastRefill` was stamped with the second — so the gap between the two reads bec",
+      "needle_fact": "In TokenBucket.allow(), time.Now() was called twice — once to compute elapsed and once to assign b.lastRefill — so on a loaded CI box the gap between the two calls (3+ms) was silently dropped from the refill accounting, leaving the bucket empty on the next call."
+    },
+    {
+      "id": "T02",
+      "topic": "off-by-one error in a loop bound in CSV chunk processor",
+      "full_tokens": 1050,
+      "butterfly_tokens": 700,
+      "lastN_tokens": 629,
+      "butterfly": 1,
+      "lastN": 1,
+      "butterfly_answer": "`end = min(start + chunk_size, n - 1)` — the `n - 1` should have been `n`. Python slicing is half-open, so the last chunk's end index was one short, dropping the final row.",
+      "lastN_answer": "The slice's end index used `n - 1` instead of `n`, so the last element was dropped on every chunk (and especially the final chunk). Fix: `end = min(start + chunk_size, n)`.",
+      "needle_fact": "In src/ingest/chunker.py, iter_chunks computed the slice upper bound as `end = min(start + chunk_size, n - 1)` — the `n - 1` was wrong because Python slicing is half-open, so `rows[start:end]` excludes index `end`; the correct clamp is `n`, and the `- 1` was dropping the final row of every file."
+    },
+    {
+      "id": "T03",
+      "topic": "missing await on async function call causes assertion to run before promise resolves",
+      "full_tokens": 1106,
+      "butterfly_tokens": 548,
+      "lastN_tokens": 528,
+      "butterfly": 1,
+      "lastN": 1,
+      "butterfly_answer": "`db.insert` called `cache.refresh(id)` without awaiting it. Since `cache.refresh` is async and populates `index` only after an `await`, `db.insert` returned before the index was written. The test's `u",
+      "lastN_answer": "The root cause: `db.insert` called `cache.refresh(id)` without awaiting it (a floating promise), so `db.insert` returned before the cache was populated. The test's `user.name` getter read through the ",
+      "needle_fact": "db.insert in src/db/index.js called the async cache.refresh(id) without awaiting it, so db.insert returned before index.set(id, row) ran; the intermittent test failure came from the test's getter reading index.get(this.id)?.name before the floating promise resolved."
+    }
+  ]
+}

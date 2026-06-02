@@ -1,0 +1,75 @@
+{
+  "id": "T18",
+  "topic": "event listener never removed on component unmount, firing on stale instance",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 867
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 260
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 586
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 235
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 591
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 260
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 867
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 327
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 646
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 382
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 731
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 392
+    }
+  ],
+  "butterfly_answer": "`.bind(this)` in `socketClient.js:5` — it created a new function reference each time, so `off()` could never match the original listener to remove it.",
+  "lastN_answer": "The prior context doesn't include it — the conversation only covers style and config discussions (file extensions, arrow vs function declarations, prettier line length, timestamps, logging libraries). No root cause was mentioned.",
+  "needle_fact": "In socketClient.js, the `on()` method called `fn.bind(this)` before pushing to the listeners array, so `off()`'s `l !== fn` filter could never match the stored (bound) reference — every unmount left the listener in place.",
+  "completed_at": "2026-04-24T19:16:36.604Z"
+}

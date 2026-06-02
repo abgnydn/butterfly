@@ -1,0 +1,38 @@
+{
+  "title": "Butterfly compaction: a small-LLM context-compaction mechanism is a content-shape adapter, not a universal context manager",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "language": "eng",
+  "creators": [
+    {
+      "name": "Günaydın, Ahmet Barış",
+      "affiliation": "Independent researcher"
+    }
+  ],
+  "description": "<p><strong>Butterfly</strong> is a falsification study of a tag-and-rebuild context-compaction loop for small language models: every message in a conversation is tagged keep / summarize / melt, the surviving content is rebuilt (the \"chrysalis\") into a tight token budget, fresh off-topic noise is injected, and the loop repeats across generations. The advertised claim was that this preserves load-bearing facts better than naive last-N truncation under compounding noise.</p><p>The investigation pre-registered the claim, refuted its own first pre-registration, filed a second regime that confirmed, then hardened the result by swapping the tagger: a regex tagger, a 45-parameter softmax classifier, a 768-dimensional embedding head, and frontier instruction-tuned LLM taggers (qwen3-14b, gemma) under matched protocol. The mechanism wins only when the tagger's prior matches the load-bearing-content distribution in the transcripts being compacted; on adversarial transcripts whose needles are real prose rather than identifier shapes, every tagger fails and multi-generation noise injection acts as a feedback loop that amplifies tagger weakness. The directional finding was reproduced against the external LongMemEval benchmark (s and m) across three orders of magnitude of context size and a cross-domain test.</p><p><strong>Conclusion:</strong> the compaction mechanism is real but it is a content-shape adapter — the engineering problem lives in the tagger, not the rebuild step. Generic \"find what's important\" prompts on frontier LLMs do not reliably replicate it; a small classifier trained on labeled examples of a domain's load-bearing shapes does. This deposit archives the full harness (the early-April origin rig and the May extensions), every per-generation trace, the trained tagger weights, the investigation writeup (PAPER.md), and a manuscript draft (paper/butterfly-manuscript.pdf). The work ran inside the neuropulse browser visualizer (github.com/abgnydn/neuropulse), where the in-app demo and the git-timestamped pre-registrations (PREDICTIONS.md, entries P-20260512-05 and P-20260515-06) remain.</p>",
+  "keywords": [
+    "context compaction",
+    "context window management",
+    "small language models",
+    "Phi-3",
+    "retrieval",
+    "long-context",
+    "LongMemEval",
+    "pre-registration",
+    "falsification",
+    "reproducible research",
+    "memory management",
+    "LLM agents",
+    "summarization",
+    "in-browser computation"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/abgnydn/neuropulse",
+      "scheme": "url"
+    }
+  ],
+  "notes": "Original code, MIT-licensed. Pre-registrations were filed with a git-timestamped audit trail in the neuropulse repository's PREDICTIONS.md (entries P-20260512-05 and P-20260515-06) and are referenced here by id. Generative AI was used as a coding and writing aid; all output was author-reviewed and validated against the LongMemEval benchmark and the committed per-generation traces."
+}

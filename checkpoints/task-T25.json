@@ -1,0 +1,75 @@
+{
+  "id": "T25",
+  "topic": "unicode normalization mismatch — NFC vs NFD comparison failing",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1437
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 363
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 645
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 347
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 771
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 324
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1437
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 389
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 665
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 381
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 799
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 377
+    }
+  ],
+  "butterfly_answer": "NFD/NFC Unicode mismatch: user input was stored in NFD form (e.g., `café` as `cafe` + combining accent), but search queries arrived in NFC form (precomposed `é`), so Postgres byte comparison saw them as different strings.",
+  "lastN_answer": "The prior context doesn't include a root cause — the conversation covered code style, a comment about timeout behavior, and linting. Whatever the underlying bug was, it wasn't discussed in what's been shared here.",
+  "needle_fact": "Root cause: signup inserts in routes/signup.ts stored display_name as-is, so macOS/iOS clients wrote NFD (decomposed, e + U+0301) while the search bar query arrived as NFC (precomposed U+00E9), making Postgres `=` comparison fail on visually identical strings. Fix: normalize('NFC') on both write and read paths, backfill existing rows, and add CHECK (display_name IS NFC NORMALIZED).",
+  "completed_at": "2026-04-24T19:37:21.742Z"
+}

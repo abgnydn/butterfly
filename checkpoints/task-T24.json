@@ -1,0 +1,75 @@
+{
+  "id": "T24",
+  "topic": "shared mutable state — module-level singleton accumulating across tests",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1085
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 288
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 837
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 199
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 581
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 164
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1085
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 369
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 911
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 372
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 748
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 399
+    }
+  ],
+  "butterfly_answer": "Mutable default arguments in Python — e.g., `roles=[]` in `User.__init__`. Python evaluates default values once at function definition time, so the same list object is shared across all calls that use the default, causing unintended state bleed between instances.",
+  "lastN_answer": "The prior context doesn't include what root cause was found — it only shows the code style discussion that followed. Whatever was discovered isn't captured here.",
+  "needle_fact": "The root cause was a mutable default argument `roles=[]` in `User.__init__` — Python evaluates default arguments once at function definition time, so every User() instance that omitted the roles argument shared the same list object, causing roles to accumulate across tests.",
+  "completed_at": "2026-04-24T19:34:18.344Z"
+}

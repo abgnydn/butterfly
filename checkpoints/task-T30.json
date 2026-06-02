@@ -1,0 +1,75 @@
+{
+  "id": "T30",
+  "topic": "circular import causing temporal dead zone — module A imports B which imports A",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1228
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 346
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 712
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 235
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 599
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 227
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1228
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 375
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 734
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 359
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 716
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 388
+    }
+  ],
+  "butterfly_answer": "The circular import between `auth-middleware.ts` and `user-service.ts` — each file was importing from the other, creating a dependency cycle. The fix was extracting the shared `TokenValidator` logic into a neutral third file (`services/token-validator.ts`) that both could import without referencing ",
+  "lastN_answer": "The prior context doesn't mention a root cause — the conversation was entirely about cleanup items (variable naming, logging, linter config, unused package). No bug investigation or root cause analysis appears anywhere in it.",
+  "needle_fact": "The root cause was a circular import between auth-middleware.ts and services/user-service.ts: the top-level `export const authMiddleware = new AuthMiddleware()` on line 14 of auth-middleware.ts instantiated AuthMiddleware at module-evaluation time, which referenced UserService while user-service.ts was still mid-evaluation, so UserService was in its temporal dead zone and ESM threw ReferenceError (CJS dev builds hid it by returning a partial exports object).",
+  "completed_at": "2026-04-24T19:50:30.688Z"
+}

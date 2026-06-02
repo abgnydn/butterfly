@@ -1,0 +1,462 @@
+[
+  {
+    "id": "T01",
+    "topic": "timing race \u2014 same clock function called twice across an assertion boundary",
+    "messages": [
+      {
+        "role": "user",
+        "content": "CI is flaking on TestTokenExpiry about 1 in 40 runs. Locally it always passes. The assertion is `assert.Equal(t, expected, token.IsExpired())` but sometimes it returns true when it shouldn't."
+      },
+      {
+        "role": "assistant",
+        "content": "Can you share the test and the IsExpired implementation? Also \u2014 is the expiry window tight (sub-second)?"
+      },
+      {
+        "role": "user",
+        "content": "Here's the test:\n\n```go\nfunc TestTokenExpiry(t *testing.T) {\n    tok := NewToken(\"abc\", 100*time.Millisecond)\n    time.Sleep(50 * time.Millisecond)\n    expected := false\n    assert.Equal(t, expected, tok.IsExpired())\n}\n```\n\nAnd IsExpired:\n\n```go\nfunc (t *Token) IsExpired() bool {\n    return time.Now().After(t.createdAt.Add(t.ttl))\n}\n```"
+      },
+      {
+        "role": "assistant",
+        "content": "And NewToken? I want to see where createdAt gets set."
+      },
+      {
+        "role": "user",
+        "content": "```go\nfunc NewToken(val string, ttl time.Duration) *Token {\n    return &Token{value: val, ttl: ttl, createdAt: time.Now()}\n}\n```"
+      },
+      {
+        "role": "assistant",
+        "content": "This looks fine at first glance but there's a subtle issue. The test sleeps 50ms with a 100ms TTL \u2014 only a 50ms safety margin. On a loaded CI runner, sleep can overrun significantly. But that alone wouldn't be the 1-in-40 flake pattern you describe. Let me look more carefully... is there anything between NewToken and the Sleep call? Any setup, logging, allocation?"
+      },
+      {
+        "role": "user",
+        "content": "No, it's exactly what I pasted. Oh wait \u2014 there is a t.Logf at the top I trimmed. Let me paste the real version:\n\n```go\nfunc TestTokenExpiry(t *testing.T) {\n    t.Logf(\"starting at %v\", time.Now())\n    tok := NewToken(\"abc\", 100*time.Millisecond)\n    time.Sleep(50 * time.Millisecond)\n    assert.Equal(t, false, tok.IsExpired())\n}\n```"
+      },
+      {
+        "role": "assistant",
+        "content": "The t.Logf doesn't matter here. The real problem is structural: the test reads the clock implicitly TWICE across the assertion boundary. `NewToken` calls `time.Now()` to set createdAt. Then `IsExpired()` calls `time.Now()` AGAIN to check. The assertion is really `time.Now()\u2082 < time.Now()\u2081 + 100ms - 50ms_sleep`. If scheduling jitter between the two `time.Now()` calls exceeds 50ms (GC pause, CI runner steal, cold page fault on first call), the second clock read lands past the TTL and IsExpired returns true. Two reads of the same clock function, one on each side of the assertion, with no shared snapshot."
+      },
+      {
+        "role": "user",
+        "content": "Huh. So even though it's the same clock source, the two reads can diverge by more than the margin?"
+      },
+      {
+        "role": "assistant",
+        "content": "Right. There's no single timestamp the test controls. Each `time.Now()` is an independent syscall-ish read, and under CI load the gap between them can blow through your 50ms budget. This is exactly the kind of thing that's 1-in-40 instead of always \u2014 it only bites when the scheduler hiccups between the two reads."
+      },
+      {
+        "role": "user",
+        "content": "How do I actually fix it? I could just bump the TTL to 500ms."
+      },
+      {
+        "role": "assistant",
+        "content": "Bumping the margin papers over it but doesn't fix the race \u2014 just makes it rarer. The real fix is to inject a clock so the test owns both reads:\n\n```go\ntype Clock interface { Now() time.Time }\n\ntype Token struct {\n    value     string\n    ttl       time.Duration\n    createdAt time.Time\n    clock     Clock\n}\n\nfunc (t *Token) IsExpired() bool {\n    return t.clock.Now().After(t.createdAt.Add(t.ttl))\n}\n```\n\nThen in the test use a fake clock you advance manually. No wall-clock reads, no race."
+      },
+      {
+        "role": "user",
+        "content": "Do we have a fake clock in the codebase already?"
+      },
+      {
+        "role": "assistant",
+        "content": "Check internal/clock \u2014 I've seen projects with a testclock.Fake that has Advance(d). If not, the github.com/benbjohnson/clock package is the usual choice."
+      },
+      {
+        "role": "user",
+        "content": "Found it \u2014 internal/clock/fake.go. OK let me rewrite the test."
+      },
+      {
+        "role": "assistant",
+        "content": "Good. The rewrite should look roughly like:\n\n```go\nfunc TestTokenExpiry(t *testing.T) {\n    fc := clock.NewFake()\n    tok := NewTokenWithClock(\"abc\", 100*time.Millisecond, fc)\n    fc.Advance(50 * time.Millisecond)\n    assert.False(t, tok.IsExpired())\n    fc.Advance(51 * time.Millisecond)\n    assert.True(t, tok.IsExpired())\n}\n```\n\nNotice I also added the post-expiry assertion \u2014 the old test only covered one side."
+      },
+      {
+        "role": "user",
+        "content": "Should I keep NewToken for production callers or change its signature?"
+      },
+      {
+        "role": "assistant",
+        "content": "Keep NewToken as a thin wrapper that passes a realClock. Production code path stays identical; only tests see the injection."
+      },
+      {
+        "role": "user",
+        "content": "OK done. Ran the new test 500 times in a loop, zero flakes. Old test with TTL bumped to 500ms also passed 500 times but I'm going to delete it."
+      },
+      {
+        "role": "assistant",
+        "content": "Good call deleting it \u2014 leaving both around invites someone to copy the wall-clock pattern for a new test later."
+      },
+      {
+        "role": "user",
+        "content": "One more thing \u2014 are there other tests in the repo with this shape? Two time.Now() reads straddling an assertion?"
+      },
+      {
+        "role": "assistant",
+        "content": "Worth grepping. Look for `time.Sleep` inside _test.go files followed by an assertion that calls something invoking time.Now(). `grep -rn 'time.Sleep' --include='*_test.go'` then audit each hit for the same pattern."
+      },
+      {
+        "role": "user",
+        "content": "Found three more. Filing a cleanup ticket. Thanks."
+      },
+      {
+        "role": "assistant",
+        "content": "Nice. The pattern to remember: if your test's correctness depends on the gap between two independent clock reads being smaller than some margin, it's a race \u2014 the fix is to collapse it to a single controlled time source, not to widen the margin."
+      }
+    ],
+    "needle_fact": "The flake is caused by two independent `time.Now()` calls straddling the assertion \u2014 one inside `NewToken` setting `createdAt`, and a second inside `IsExpired()` \u2014 with no shared timestamp, so scheduler jitter between the two reads can exceed the 50ms safety margin and push `IsExpired()` past the TTL boundary.",
+    "question": "Quick reminder \u2014 what was the actual root cause?"
+  },
+  {
+    "id": "T02",
+    "topic": "off-by-one error in a loop bound (using <= where < was intended)",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I've got a weird bug in our metrics aggregator. When we roll up hourly buckets into a daily summary, the totals are slightly off \u2014 like 4.1% too high on average. It's not random noise, it's consistent. Any ideas where to start?"
+      },
+      {
+        "role": "assistant",
+        "content": "Consistent ~4% overcount is suspicious \u2014 1/24 \u2248 4.17%, which is exactly what you'd get if you were summing 25 hourly buckets instead of 24. Classic off-by-one smell. Can you show me the aggregation function?"
+      },
+      {
+        "role": "user",
+        "content": "Oh interesting, I hadn't done that math. Here's the function:\n\n```python\ndef aggregate_daily(hourly_buckets, day_start_ts):\n    total = 0\n    for h in range(0, 25):\n        bucket_ts = day_start_ts + h * 3600\n        if bucket_ts in hourly_buckets:\n            total += hourly_buckets[bucket_ts]\n    return total\n```"
+      },
+      {
+        "role": "assistant",
+        "content": "Found it. `range(0, 25)` iterates h = 0, 1, 2, ..., 24 \u2014 that's 25 iterations, not 24. The last one (h=24) corresponds to `day_start_ts + 24*3600`, which is actually the *first* hour of the NEXT day. If that bucket exists in `hourly_buckets`, you're double-counting it into today's total."
+      },
+      {
+        "role": "user",
+        "content": "Ugh, yes. So the fix is just `range(0, 24)`?"
+      },
+      {
+        "role": "assistant",
+        "content": "Exactly. `range(0, 24)` gives you h = 0..23, which maps to the 24 hours of the day. Or equivalently `range(24)`. The off-by-one came from writing `25` when you meant `24` \u2014 easy mistake when you're thinking 'hours 0 through 24' inclusively."
+      },
+      {
+        "role": "user",
+        "content": "OK I changed it to `range(0, 24)` and reran against yesterday's data. Total went from 1,248,312 to 1,198,404. That's about 4% lower \u2014 matches your prediction."
+      },
+      {
+        "role": "assistant",
+        "content": "Perfect. One more sanity check \u2014 do you have a test that would have caught this? If not, worth adding one with a known fixture where you stuff a sentinel value into the 00:00 bucket of the *next* day and assert it's not included in today's total."
+      },
+      {
+        "role": "user",
+        "content": "Good call, we don't have that. Let me write one.\n\n```python\ndef test_next_day_bucket_excluded():\n    day_start = 1700000000  # arbitrary\n    buckets = {\n        day_start + h * 3600: 100 for h in range(24)\n    }\n    buckets[day_start + 24 * 3600] = 99999  # next day, should NOT count\n    assert aggregate_daily(buckets, day_start) == 2400\n```"
+      },
+      {
+        "role": "assistant",
+        "content": "That's exactly the test you want. It would have failed loudly with the old code (returning 102399 instead of 2400) and passes with the fix."
+      },
+      {
+        "role": "user",
+        "content": "Running it now... passes. And with the old `range(0, 25)` it fails with `102399 != 2400`, just as you said."
+      },
+      {
+        "role": "assistant",
+        "content": "Great. While you're in there \u2014 are there other places in the codebase that do hour-based iteration? Same off-by-one could be lurking elsewhere, especially if this was copy-pasted."
+      },
+      {
+        "role": "user",
+        "content": "Hmm, let me grep... yeah there's `aggregate_weekly` and `aggregate_monthly`. Weekly uses `range(0, 7)` which looks right. Monthly uses `range(1, days_in_month + 1)` which also looks right to me."
+      },
+      {
+        "role": "assistant",
+        "content": "Both of those look correct. Weekly: 0..6 = 7 days. Monthly: 1..days_in_month inclusive of start, exclusive of days_in_month+1, so it iterates days 1 through days_in_month. Good."
+      },
+      {
+        "role": "user",
+        "content": "One thing though \u2014 I'm curious why `range(0, 25)` got written in the first place. Git blame says it's been like that for 14 months. How did nobody notice?"
+      },
+      {
+        "role": "assistant",
+        "content": "Probably because the bug only manifests when the 00:00 bucket of the *next* day already exists in `hourly_buckets` at the time you run the rollup. If your rollup ran right at midnight before the next day's data started flowing in, the `if bucket_ts in hourly_buckets` check would be False and you'd silently get the right answer. The bug only shows when rollups run late, or when the input dict covers multiple days."
+      },
+      {
+        "role": "user",
+        "content": "That makes sense \u2014 we recently switched the cron from 00:05 to 01:30 to give Kafka time to drain. So the bug's probably been latent the whole time and only surfaced after that cron change."
+      },
+      {
+        "role": "assistant",
+        "content": "Yep, that's consistent with your observation. A schedule change turned a silent bug into a visible one. Worth a post-mortem note so future-you remembers: the loop bound was always wrong, it just didn't have data to be wrong about until the cron moved."
+      },
+      {
+        "role": "user",
+        "content": "Filing that now. Deploying the fix to staging."
+      },
+      {
+        "role": "assistant",
+        "content": "Sounds good. Verify against a full day of staging data before promoting \u2014 the 4% delta should reproduce cleanly."
+      },
+      {
+        "role": "user",
+        "content": "Will do, thanks."
+      }
+    ],
+    "needle_fact": "In aggregate_daily, the loop was written as `for h in range(0, 25)` instead of `range(0, 24)`, so it included h=24 which maps to day_start_ts + 24*3600 \u2014 the 00:00 bucket of the *next* day. When that bucket existed in hourly_buckets, it was double-counted into today's total, causing a consistent ~4.17% (1/24) overcount. The bug only surfaced after the rollup cron moved from 00:05 to 01:30, giving the next-day bucket time to exist.",
+    "question": "Quick reminder \u2014 what was the actual root cause?"
+  },
+  {
+    "id": "T03",
+    "topic": "missing await on async function call causing flaky test assertions",
+    "messages": [
+      {
+        "role": "user",
+        "content": "My test `user.service.test.ts` keeps flaking. Sometimes it passes, sometimes it fails with `expected undefined to equal 'alice'`. The code under test hasn't changed in weeks."
+      },
+      {
+        "role": "assistant",
+        "content": "Flaky tests with intermittent `undefined` usually point to async timing. Can you paste the test and the function it calls?"
+      },
+      {
+        "role": "user",
+        "content": "Here's the test:\n```ts\nit('creates a user and returns the name', () => {\n  const svc = new UserService(db);\n  svc.createUser({ name: 'alice' });\n  const result = svc.getLatest();\n  expect(result.name).toEqual('alice');\n});\n```\nAnd `createUser` is async because it writes to Postgres."
+      },
+      {
+        "role": "assistant",
+        "content": "Can you show `UserService.createUser` and `getLatest`? I want to confirm whether the write actually completes before `getLatest` reads."
+      },
+      {
+        "role": "user",
+        "content": "```ts\nasync createUser(input: { name: string }) {\n  await this.db.query('INSERT INTO users(name) VALUES($1)', [input.name]);\n  this.cache.latest = input;\n}\n\ngetLatest() {\n  return this.cache.latest;\n}\n```"
+      },
+      {
+        "role": "assistant",
+        "content": "There's the root cause. In your test you call `svc.createUser({ name: 'alice' })` without `await`. `createUser` is async, so it returns a Promise immediately and the INSERT + `this.cache.latest = input` assignment happen on a later microtask. By the time you call `svc.getLatest()`, `cache.latest` is still undefined from the previous state. The test only passes when the event loop happens to flush the microtask before the assertion \u2014 which is why it's flaky."
+      },
+      {
+        "role": "user",
+        "content": "Oh. So the assertion races the promise resolution."
+      },
+      {
+        "role": "assistant",
+        "content": "Exactly. Fix is to `await` it and make the test async:\n```ts\nit('creates a user and returns the name', async () => {\n  const svc = new UserService(db);\n  await svc.createUser({ name: 'alice' });\n  const result = svc.getLatest();\n  expect(result.name).toEqual('alice');\n});\n```"
+      },
+      {
+        "role": "user",
+        "content": "Done. Tests pass 50/50 runs now. But shouldn't TypeScript have warned me about the unawaited promise?"
+      },
+      {
+        "role": "assistant",
+        "content": "It can, but only if you enable the `@typescript-eslint/no-floating-promises` rule. TS itself won't flag it \u2014 a function returning `Promise<void>` called without await is legal TypeScript."
+      },
+      {
+        "role": "user",
+        "content": "Let me add that rule. Is it safe to turn on repo-wide?"
+      },
+      {
+        "role": "assistant",
+        "content": "Generally yes, but expect a wave of existing violations. You can enable it as `warn` first, fix incrementally, then promote to `error`. Also consider `require-await` and `no-misused-promises` \u2014 they catch related bugs like passing an async function where a sync callback is expected."
+      },
+      {
+        "role": "user",
+        "content": "Added as warn. 37 violations across the repo. I'll open a tracking issue."
+      },
+      {
+        "role": "assistant",
+        "content": "Good. Worth auditing those \u2014 the flaky test you just fixed is almost certainly not the only one. Any place you see `someAsyncFn()` with no await and no `.then`/`.catch`, you either have a silent race or a swallowed error."
+      },
+      {
+        "role": "user",
+        "content": "One more thing \u2014 `getLatest()` reading from `this.cache.latest` feels sketchy. Should that also be async?"
+      },
+      {
+        "role": "assistant",
+        "content": "That's a separate design question. Right now your cache is a write-through on success, which is fine if you always await `createUser`. If you want `getLatest` to be authoritative regardless of caller discipline, make it hit the DB \u2014 but that defeats the cache. I'd leave it and rely on the lint rule to enforce awaits."
+      },
+      {
+        "role": "user",
+        "content": "Fair. Closing this one out \u2014 thanks."
+      },
+      {
+        "role": "assistant",
+        "content": "No problem. Summary for your records: the test called an async `createUser` without `await`, so the cache assignment happened after the assertion read it. Adding `await` fixed it; enabling `no-floating-promises` will prevent regressions."
+      },
+      {
+        "role": "user",
+        "content": "Quick reminder \u2014 what was the actual root cause?"
+      }
+    ],
+    "needle_fact": "The test in user.service.test.ts called the async method svc.createUser({ name: 'alice' }) without await, so the INSERT and the this.cache.latest = input assignment happened on a later microtask, after svc.getLatest() had already read the stale undefined value.",
+    "question": "Quick reminder \u2014 what was the actual root cause?"
+  },
+  {
+    "id": "T04",
+    "topic": "shared mutable state \u2014 module-level singleton accumulating across tests",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Our test suite is failing intermittently. When I run `pytest tests/test_user_service.py` alone, everything passes. When I run the full suite `pytest tests/`, about 40% of the user service tests fail with assertion errors on user counts being higher than expected."
+      },
+      {
+        "role": "assistant",
+        "content": "Classic test pollution symptom. The fact that tests pass in isolation but fail in the full suite strongly suggests shared state leaking between tests. Can you share the test file and the service module it's testing? Also, what assertions are failing exactly?"
+      },
+      {
+        "role": "user",
+        "content": "Here's a failing test:\n\n```python\ndef test_create_user_increments_count(user_service):\n    user_service.create_user('alice@example.com')\n    assert user_service.user_count() == 1\n```\n\nWhen run in the full suite, `user_count()` returns something like 7 or 12 instead of 1."
+      },
+      {
+        "role": "assistant",
+        "content": "The count is accumulating across tests. Let me see `user_service.py` and your `conftest.py` \u2014 specifically how `user_service` fixture is constructed."
+      },
+      {
+        "role": "user",
+        "content": "conftest.py:\n\n```python\nimport pytest\nfrom app.services import user_service as us_module\n\n@pytest.fixture\ndef user_service():\n    return us_module.get_service()\n```\n\nuser_service.py:\n\n```python\n_registry = {}\n_service_instance = None\n\nclass UserService:\n    def __init__(self):\n        self.users = _registry\n\n    def create_user(self, email):\n        _registry[email] = {'email': email}\n\n    def user_count(self):\n        return len(_registry)\n\ndef get_service():\n    global _service_instance\n    if _service_instance is None:\n        _service_instance = UserService()\n    return _service_instance\n```"
+      },
+      {
+        "role": "assistant",
+        "content": "Found it. The root cause is that `_registry` is a module-level dict in `app/services/user_service.py`, and `UserService.__init__` binds `self.users = _registry` \u2014 so every instance shares the exact same dict object. Combined with `get_service()` caching `_service_instance` as a module-level singleton, the registry is never reset between tests. Each test's `create_user` call mutates the same `_registry` dict, which persists for the entire pytest process lifetime."
+      },
+      {
+        "role": "user",
+        "content": "So why does it pass when I run just the one file?"
+      },
+      {
+        "role": "assistant",
+        "content": "When you run `test_user_service.py` alone, the tests in that file happen to be ordered such that the accumulation doesn't cross an assertion boundary that depends on a specific count \u2014 or the first test happens to assert on count==1 and runs first with an empty registry. In the full suite, other test files import and use the service first (maybe integration tests, maybe fixtures that create users), so by the time the user service tests run, `_registry` already has entries."
+      },
+      {
+        "role": "user",
+        "content": "Okay, what's the fix? Should I just clear _registry in a fixture?"
+      },
+      {
+        "role": "assistant",
+        "content": "Clearing `_registry` in an autouse fixture would work as a band-aid, but the real fix is to not use module-level mutable state at all. Make the registry an instance attribute:\n\n```python\nclass UserService:\n    def __init__(self):\n        self.users = {}\n\n    def create_user(self, email):\n        self.users[email] = {'email': email}\n\n    def user_count(self):\n        return len(self.users)\n```\n\nAnd drop the `get_service()` singleton pattern unless you have a genuine reason for it. If the app genuinely needs a singleton in production, construct it at application startup and inject it, rather than caching it at module scope."
+      },
+      {
+        "role": "user",
+        "content": "We do need a single instance in production \u2014 it holds a connection pool. Can we keep the singleton but make tests isolated?"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes. Two common patterns:\n\n1. **Dependency injection**: construct `UserService()` in your app factory and pass it down. Tests construct their own instance per test.\n\n2. **Reset hook**: expose a `reset()` classmethod or a `_reset_for_tests()` helper, and call it in an autouse fixture.\n\nFor option 1, your conftest becomes:\n\n```python\n@pytest.fixture\ndef user_service():\n    return us_module.UserService()  # fresh instance every test\n```\n\nNo singleton involvement in tests at all."
+      },
+      {
+        "role": "user",
+        "content": "I like option 1. But I'm worried \u2014 will other tests that import `user_service.get_service()` directly still hit the stale singleton?"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes, that's a real concern. Grep the codebase for `get_service()` calls in tests. Anything that calls it bypasses your fixture and hits the module-level `_service_instance`. You'll want to either (a) refactor those call sites to go through the fixture, or (b) add an autouse fixture in the top-level `conftest.py` that resets `us_module._service_instance = None` and `us_module._registry.clear()` between every test as a safety net."
+      },
+      {
+        "role": "user",
+        "content": "Done. I grepped \u2014 4 tests called `get_service()` directly. Refactored them to use the fixture. Now running the full suite..."
+      },
+      {
+        "role": "assistant",
+        "content": "How did it go?"
+      },
+      {
+        "role": "user",
+        "content": "All 312 tests pass, and they pass consistently across 10 consecutive runs. Counts are correct. Thanks!"
+      },
+      {
+        "role": "assistant",
+        "content": "Great. One last suggestion: add a lint rule or a simple CI check that flags module-level mutable state (dicts, lists, sets) at import in `app/services/`. That pattern is the single most common source of test-pollution bugs I see \u2014 catching it early saves this whole debugging cycle next time."
+      },
+      {
+        "role": "user",
+        "content": "Good idea, I'll add a ruff rule for it. Quick reminder \u2014 what was the actual root cause?"
+      }
+    ],
+    "needle_fact": "The `_registry` dict and `_service_instance` were module-level variables in app/services/user_service.py; UserService.__init__ bound self.users to the shared `_registry` and get_service() cached a single instance, so state accumulated across tests for the lifetime of the pytest process.",
+    "question": "Quick reminder \u2014 what was the actual root cause?"
+  },
+  {
+    "id": "T05",
+    "topic": "unicode normalization mismatch \u2014 NFC vs NFD comparison failing",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Users report that searching for caf\u00e9 in our macOS-uploaded document library returns zero results, but the document is clearly there. Works fine for Linux-uploaded docs."
+      },
+      {
+        "role": "assistant",
+        "content": "Classic NFC vs NFD issue. macOS HFS+/APFS filenames are stored in a variant of NFD (decomposed), while most web input comes in as NFC (composed). Can you show me the search function?"
+      },
+      {
+        "role": "user",
+        "content": "Here's `search/indexer.py`:\n```python\ndef index_document(path: Path, title: str):\n    key = title.lower()\n    redis.hset('doc:title', key, str(path))\n\ndef find_by_title(query: str):\n    return redis.hget('doc:title', query.lower())\n```"
+      },
+      {
+        "role": "assistant",
+        "content": "And where does `title` come from when macOS uploads arrive? Is it derived from the filename or from a form field?"
+      },
+      {
+        "role": "user",
+        "content": "From the filename via `path.stem` in `upload_handler.py` line 83. Form uploads use the multipart filename field."
+      },
+      {
+        "role": "assistant",
+        "content": "There's the root cause. In `upload_handler.py:83`, `path.stem` on a macOS-uploaded file returns the filename in NFD form (e.g. 'cafe\\u0301' \u2014 'e' + combining acute U+0301), so `index_document` stores the key as NFD. But browser form submissions from the search box send 'caf\u00e9' as NFC ('\\u00e9'). The Redis hash lookup is byte-exact, so NFD-indexed keys never match NFC queries. You need to normalize both sides to the same form \u2014 call `unicodedata.normalize('NFC', title)` before `key = title.lower()` in `index_document`, and the same on the query side in `find_by_title`."
+      },
+      {
+        "role": "user",
+        "content": "Oh. That would explain why it only breaks for the macOS uploads. Let me verify \u2014 how do I actually see the bytes?"
+      },
+      {
+        "role": "assistant",
+        "content": "In a Python REPL:\n```python\nimport unicodedata\ns_nfc = 'caf\u00e9'\ns_nfd = unicodedata.normalize('NFD', s_nfc)\nprint(s_nfc.encode('utf-8'))  # b'caf\\xc3\\xa9'\nprint(s_nfd.encode('utf-8'))  # b'cafe\\xcc\\x81'\nprint(s_nfc == s_nfd)         # False\nprint(len(s_nfc), len(s_nfd)) # 4 5\n```\nThe two strings look identical when printed but are not equal and hash differently."
+      },
+      {
+        "role": "user",
+        "content": "Confirmed. I dumped a macOS-uploaded key from Redis and it's 5 codepoints for 'caf\u00e9'. Query from the search box is 4."
+      },
+      {
+        "role": "assistant",
+        "content": "Good. Now the fix \u2014 add a helper:\n```python\nimport unicodedata\n\ndef _norm_key(s: str) -> str:\n    return unicodedata.normalize('NFC', s).casefold()\n```\nUse `.casefold()` instead of `.lower()` while you're at it \u2014 it handles cases like German \u00df \u2192 ss that `.lower()` misses. Apply in both `index_document` and `find_by_title`."
+      },
+      {
+        "role": "user",
+        "content": "What about the existing NFD-indexed entries in Redis? They'll still be broken after I deploy."
+      },
+      {
+        "role": "assistant",
+        "content": "You need a one-time migration. Something like:\n```python\ndef migrate_title_keys():\n    for old_key, value in redis.hgetall('doc:title').items():\n        old = old_key.decode('utf-8')\n        new = _norm_key(old)\n        if new != old:\n            redis.hset('doc:title', new, value)\n            redis.hdel('doc:title', old_key)\n```\nRun it once after deploying the new indexing code."
+      },
+      {
+        "role": "user",
+        "content": "Should I worry about collisions? If two documents had 'caf\u00e9' (NFC) and 'caf\u00e9' (NFD) as separate titles before, they'd now collide."
+      },
+      {
+        "role": "assistant",
+        "content": "Possible but unlikely \u2014 they'd have looked identical to users anyway, so it's almost certainly the same logical document uploaded twice. Log collisions during migration and review manually:\n```python\nif redis.hexists('doc:title', new):\n    log.warning('collision on %r \u2192 %r', old, new)\n    continue\n```"
+      },
+      {
+        "role": "user",
+        "content": "Are there other places in the codebase that might have this same bug?"
+      },
+      {
+        "role": "assistant",
+        "content": "Likely yes. Grep for any dict/set/hash keyed on user-supplied strings: tags, usernames, filenames in the FS layer, cache keys. Also check any cross-system comparison \u2014 e.g. comparing a DB row's title against a filesystem stat. Postgres by default does NOT normalize, so if you're doing `WHERE title = %s` you have the same issue."
+      },
+      {
+        "role": "user",
+        "content": "We have a tags table. Tags are unique per user. Users create them via the web UI (NFC) but there's also a CSV import tool that reads from macOS-exported spreadsheets."
+      },
+      {
+        "role": "assistant",
+        "content": "Then yes, the CSV path probably inserts NFD tags that look like duplicates of existing NFC tags but bypass the UNIQUE constraint. Normalize at ingestion \u2014 both CSV and web form \u2014 to NFC before insert. A `BEFORE INSERT` trigger is a good defense in depth if you can't audit every write path."
+      },
+      {
+        "role": "user",
+        "content": "Why NFC specifically and not NFD? Is there a standard?"
+      },
+      {
+        "role": "assistant",
+        "content": "W3C recommends NFC for the web (see Character Model for the World Wide Web: String Matching). Browsers send NFC by default, most text on the web is NFC, and it's usually shorter in bytes. NFD is mostly an Apple filesystem quirk. Pick NFC as your canonical form everywhere except when you're specifically talking to the macOS filesystem API."
+      },
+      {
+        "role": "user",
+        "content": "Got it. Pushing the fix now. Thanks!"
+      },
+      {
+        "role": "assistant",
+        "content": "One more thing \u2014 add a test with a literal NFD string to prevent regression:\n```python\ndef test_search_matches_nfd_indexed_title():\n    index_document(Path('/x'), 'cafe\\u0301')  # NFD\n    assert find_by_title('caf\\u00e9') is not None  # NFC query\n```\nWithout that test, the next refactor can silently reintroduce the bug."
+      }
+    ],
+    "needle_fact": "In upload_handler.py:83, path.stem returns macOS filenames in NFD form, so index_document stored Redis hash keys as NFD, while browser search queries arrive as NFC \u2014 the byte-exact hget lookup never matched. Fix: normalize both sides to NFC (and casefold) before keying.",
+    "question": "Quick reminder \u2014 what was the actual root cause?"
+  }
+]

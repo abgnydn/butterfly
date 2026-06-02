@@ -1,0 +1,75 @@
+{
+  "id": "T05",
+  "topic": "unicode normalization mismatch — NFC vs NFD comparison failing",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1213
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 373
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 832
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 182
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 612
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 289
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1213
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 387
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 839
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 333
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 756
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 384
+    }
+  ],
+  "butterfly_answer": "macOS normalizes filenames to NFD (decomposed) Unicode, but the Redis keys were stored as NFC (composed). So the same string — visually identical — had different byte representations depending on whether it came from the filesystem or was typed directly, causing key lookups to miss.",
+  "lastN_answer": "The prior context doesn't mention a root cause — the conversation was about refactoring topics (async internals, logging, variable naming, guard clauses), not debugging a specific bug. If there was a root cause discussion, it wasn't in the context provided to me.",
+  "needle_fact": "In upload_handler.py:83, path.stem returns macOS filenames in NFD form, so index_document stored Redis hash keys as NFD, while browser search queries arrive as NFC — the byte-exact hget lookup never matched. Fix: normalize both sides to NFC (and casefold) before keying.",
+  "completed_at": "2026-04-24T18:39:18.666Z"
+}

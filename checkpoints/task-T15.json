@@ -1,0 +1,75 @@
+{
+  "id": "T15",
+  "topic": "unicode normalization mismatch — NFC vs NFD comparison failing",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1100
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 266
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 612
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 298
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 670
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 219
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1100
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 316
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 656
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 340
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 705
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 365
+    }
+  ],
+  "butterfly_answer": "NFD/NFC Unicode normalization mismatch. The CSV import script wrote display names in NFD form (decomposed characters), but the browser sends NFC (composed), so string comparisons in `getUserByDisplayName` never matched.",
+  "lastN_answer": "No root cause was discussed in the prior context — the conversation was entirely about code style decisions. If you're referring to something else, you'd need to share that context.",
+  "needle_fact": "The CSV import path in scripts/importContacts.ts inserted Apple-exported names in NFD form (decomposed, e.g. 'e'+U+0301) while the web signup form wrote NFC (precomposed U+00E9), so Postgres `=` comparison on users.display_name failed for visually identical strings.",
+  "completed_at": "2026-04-24T19:09:12.564Z"
+}

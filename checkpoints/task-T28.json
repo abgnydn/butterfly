@@ -1,0 +1,75 @@
+{
+  "id": "T28",
+  "topic": "event listener never removed on component unmount, firing on stale instance",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1317
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 400
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 860
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 351
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 710
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 303
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1317
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 388
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 842
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 356
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 709
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 380
+    }
+  ],
+  "butterfly_answer": "`.bind(this)` in lifecycle methods creates a new function reference on every call, so the reference passed to `removeEventListener` / `priceStream.off` never matched the one that was registered — listeners accumulated and were never cleaned up.",
+  "lastN_answer": "The prior context doesn't identify a root cause for anything. The CI timeout flakiness was flagged as possibly resource contention or test order sensitivity, but never diagnosed. No root cause was established.",
+  "needle_fact": "Calling this.handleResize.bind(this) inside componentDidMount and again inside componentWillUnmount produces two different function references, so window.removeEventListener and priceStream.off never actually detach the original listeners registered at mount time.",
+  "completed_at": "2026-04-24T19:45:19.749Z"
+}

@@ -1,0 +1,75 @@
+{
+  "id": "T11",
+  "topic": "timing race — same clock function called twice across an assertion boundary",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1804
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 341
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 593
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 126
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 503
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 211
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1804
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 381
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 626
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 370
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 740
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 392
+    }
+  ],
+  "butterfly_answer": "Double `_now_ms()` call across `allow()` and `remaining()` — the two calls happened at slightly different times, causing clock skew between them.",
+  "lastN_answer": "The prior context doesn't include any root cause discussion — the conversation was entirely about code style cleanup (naming conventions, lint rules, jest output, prettier). If a root cause was identified, it was in an earlier part of the conversation not included here.",
+  "needle_fact": "SlidingWindowLimiter.allow and SlidingWindowLimiter.remaining each called self._now_ms() independently, so they evaluated the eviction cutoff against two different timestamps — allow evicted against T1 and remaining re-evicted against a later T2, causing them to disagree about which hits were in-window and producing a remaining count inconsistent with the state allow had just established.",
+  "completed_at": "2026-04-24T18:57:30.542Z"
+}

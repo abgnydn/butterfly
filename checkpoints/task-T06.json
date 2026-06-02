@@ -1,0 +1,75 @@
+{
+  "id": "T06",
+  "topic": "timezone offset bug — date constructed in local time but compared in UTC",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1112
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 325
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 604
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 307
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 556
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 384
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1112
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 394
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 666
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 376
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 618
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 378
+    }
+  ],
+  "butterfly_answer": "`new Date(dateStr + 'T00:00:00')` parses the string as UTC instead of local time. For Bangkok (UTC+7), midnight local is `17:00 UTC` the previous day, so the window was shifted by 7 hours — pulling the wrong day's data.",
+  "lastN_answer": "There's no mention of a root cause in the prior context. The conversation covered linting, TypeScript versioning, `const` refactoring, an eslint rule, inlining a helper, and sync vs async — but no root cause was identified or discussed.",
+  "needle_fact": "getYesterdayWindow in reports/scheduler.ts calls new Date(dateStr + 'T00:00:00'), which parses as server-local time (UTC on the server), so the window boundary is midnight UTC rather than midnight in the user's timezone — the resulting UTC instant is then compared against createdAt values representing absolute UTC instants, shifting the window by the user's UTC offset (7 hours for Asia/Bangkok) and making early-morning-local rows fall outside 'yesterday'.",
+  "completed_at": "2026-04-24T18:42:24.277Z"
+}

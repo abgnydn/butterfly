@@ -1,0 +1,75 @@
+{
+  "id": "T27",
+  "topic": "memory leak from closure capturing large object inside setInterval never cleared",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1152
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 346
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 682
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 311
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 597
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 320
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1152
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 338
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 667
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 400
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 679
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 366
+    }
+  ],
+  "butterfly_answer": "`setInterval` in a `useEffect` with no cleanup function, combined with the callback closing over `snapshotBuffer`. React 18 Strict Mode's double-invoke plus route navigation accumulated multiple intervals, each retaining that 40MB array — hence the leak.",
+  "lastN_answer": "The prior context doesn't include it — the root cause was never stated in the conversation shared with me. You'd need to re-share that part.",
+  "needle_fact": "The useEffect in DashboardMetrics set up a setInterval without returning a cleanup function, so clearInterval was never called; the interval callback's closure captured the snapshotBuffer array from the initial render, pinning that growing array in memory for the life of the tab (and multiplied across remounts).",
+  "completed_at": "2026-04-24T19:42:26.539Z"
+}

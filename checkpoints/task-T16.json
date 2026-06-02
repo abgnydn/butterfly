@@ -1,0 +1,75 @@
+{
+  "id": "T16",
+  "topic": "timezone offset bug — date constructed in local time but compared in UTC",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1335
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 347
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 759
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 327
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 791
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 342
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1335
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 392
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 798
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 364
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 822
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 336
+    }
+  ],
+  "butterfly_answer": "`scripts/backfill_renewals.ts` used `new Date(y,m,d)` on a Bangkok (UTC+7) machine. JavaScript's `Date` constructor interprets bare date arguments in local time, so instead of storing `00:00 UTC` it stored `17:00 UTC`. The scheduler queries `renewal_date <= todayUTC`, so those rows satisfy the condi",
+  "lastN_answer": "The prior context doesn't include it. The conversation references \"the current fix\" and \"the main fix is solid,\" but the actual bug and its root cause were never stated in the excerpt provided.",
+  "needle_fact": "The backfill script `scripts/backfill_renewals.ts` used `new Date(year, month, day)` which constructs a Date in the runtime's local timezone. It was executed from a developer laptop set to Asia/Bangkok (UTC+7), so midnight-Bangkok serialized as 17:00 UTC the previous day, making those rows match the scheduler's UTC-midnight comparison seven hours early.",
+  "completed_at": "2026-04-24T19:11:54.881Z"
+}

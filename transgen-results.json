@@ -1,0 +1,2270 @@
+{
+  "n_generations": 3,
+  "target_tokens": 400,
+  "models": {
+    "generator": "haiku",
+    "tagger": "qwen3:0.6b",
+    "rebuild": "sonnet",
+    "answer": "sonnet",
+    "judge": "haiku"
+  },
+  "butterfly_survival": 0.5,
+  "lastN_survival": 0,
+  "head_to_head": {
+    "wins": 15,
+    "losses": 0,
+    "ties": 15
+  },
+  "rows": [
+    {
+      "id": "T01",
+      "topic": "timing race — same clock function called twice across an assertion boundary",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1218
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 358
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 647
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 286
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 614
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 314
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1218
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 391
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 673
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 357
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 679
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 388
+        }
+      ],
+      "butterfly_answer": "Two independent `time.Now()` calls — one in `NewToken` when the token was created, one in `IsExpired()` when checked. CI jitter between those two calls caused the token to appear expired before it should have been.",
+      "lastN_answer": "The prior context doesn't mention a root cause — the conversation is entirely about code style and consistency topics (error messages, var/const, eslint, error handling, test organization). No bug or incident root cause was discussed.",
+      "needle_fact": "The flake is caused by two independent `time.Now()` calls straddling the assertion — one inside `NewToken` setting `createdAt`, and a second inside `IsExpired()` — with no shared timestamp, so scheduler jitter between the two reads can exceed the 50ms safety margin and push `IsExpired()` past the TTL boundary.",
+      "completed_at": "2026-04-24T18:27:51.853Z"
+    },
+    {
+      "id": "T02",
+      "topic": "off-by-one error in a loop bound (using <= where < was intended)",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1017
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 263
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 624
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 280
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 602
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 300
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1017
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 391
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 745
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 398
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 714
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 394
+        }
+      ],
+      "butterfly_answer": "`range(0, 25)` included hour 24, which is the first bucket of the **next day**. That off-by-one meant every daily aggregate counted 25 hours instead of 24, causing ~4.17% overcount.",
+      "lastN_answer": "The prior context doesn't mention a root cause — the conversation only covers PR cleanup decisions (callbacks, eslint versioning, logger style, commit squashing). If a root cause was discussed, it wasn't included in the context provided to me.",
+      "needle_fact": "In aggregate_daily, the loop was written as `for h in range(0, 25)` instead of `range(0, 24)`, so it included h=24 which maps to day_start_ts + 24*3600 — the 00:00 bucket of the *next* day. When that bucket existed in hourly_buckets, it was double-counted into today's total, causing a consistent ~4.17% (1/24) overcount. The bug only surfaced after the rollup cron moved from 00:05 to 01:30, giving the next-day bucket time to exist.",
+      "completed_at": "2026-04-24T18:30:44.892Z"
+    },
+    {
+      "id": "T03",
+      "topic": "missing await on async function call causing flaky test assertions",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 850
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 175
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 626
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 167
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 547
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 237
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 850
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 395
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 839
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 397
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 770
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 373
+        }
+      ],
+      "butterfly_answer": "The test called `createUser` without `await`, so the assertion ran before the async operation resolved — `name` was still `undefined` at the time of the check.",
+      "lastN_answer": "The prior context doesn't mention a root cause. The conversation was focused on code style cleanup (const/let, error message casing, import order, function length) — no bug or root cause was discussed.",
+      "needle_fact": "The test in user.service.test.ts called the async method svc.createUser({ name: 'alice' }) without await, so the INSERT and the this.cache.latest = input assignment happened on a later microtask, after svc.getLatest() had already read the stale undefined value.",
+      "completed_at": "2026-04-24T18:33:45.923Z"
+    },
+    {
+      "id": "T04",
+      "topic": "shared mutable state — module-level singleton accumulating across tests",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1261
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 313
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 639
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 223
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 671
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 303
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1261
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 297
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 616
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 341
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 782
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 328
+        }
+      ],
+      "butterfly_answer": "Module-level `_registry = {}` in `app/services/user_service.py` — a shared mutable dict that persisted across tests. Since `get_service()` returned the same singleton instance, state written in one test leaked into the next.",
+      "lastN_answer": "The prior context doesn't mention a root cause — the conversation covers middleware vs. utility functions for validation, unused imports in a test file, and inconsistent error response formats, but no specific bug or root cause investigation appears.",
+      "needle_fact": "The `_registry` dict and `_service_instance` were module-level variables in app/services/user_service.py; UserService.__init__ bound self.users to the shared `_registry` and get_service() cached a single instance, so state accumulated across tests for the lifetime of the pytest process.",
+      "completed_at": "2026-04-24T18:36:38.753Z"
+    },
+    {
+      "id": "T05",
+      "topic": "unicode normalization mismatch — NFC vs NFD comparison failing",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1213
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 373
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 832
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 182
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 612
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 289
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1213
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 387
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 839
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 333
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 756
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 384
+        }
+      ],
+      "butterfly_answer": "macOS normalizes filenames to NFD (decomposed) Unicode, but the Redis keys were stored as NFC (composed). So the same string — visually identical — had different byte representations depending on whether it came from the filesystem or was typed directly, causing key lookups to miss.",
+      "lastN_answer": "The prior context doesn't mention a root cause — the conversation was about refactoring topics (async internals, logging, variable naming, guard clauses), not debugging a specific bug. If there was a root cause discussion, it wasn't in the context provided to me.",
+      "needle_fact": "In upload_handler.py:83, path.stem returns macOS filenames in NFD form, so index_document stored Redis hash keys as NFD, while browser search queries arrive as NFC — the byte-exact hget lookup never matched. Fix: normalize both sides to NFC (and casefold) before keying.",
+      "completed_at": "2026-04-24T18:39:18.666Z"
+    },
+    {
+      "id": "T06",
+      "topic": "timezone offset bug — date constructed in local time but compared in UTC",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1112
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 325
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 604
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 307
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 556
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 384
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1112
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 394
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 666
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 376
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 618
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 378
+        }
+      ],
+      "butterfly_answer": "`new Date(dateStr + 'T00:00:00')` parses the string as UTC instead of local time. For Bangkok (UTC+7), midnight local is `17:00 UTC` the previous day, so the window was shifted by 7 hours — pulling the wrong day's data.",
+      "lastN_answer": "There's no mention of a root cause in the prior context. The conversation covered linting, TypeScript versioning, `const` refactoring, an eslint rule, inlining a helper, and sync vs async — but no root cause was identified or discussed.",
+      "needle_fact": "getYesterdayWindow in reports/scheduler.ts calls new Date(dateStr + 'T00:00:00'), which parses as server-local time (UTC on the server), so the window boundary is midnight UTC rather than midnight in the user's timezone — the resulting UTC instant is then compared against createdAt values representing absolute UTC instants, shifting the window by the user's UTC offset (7 hours for Asia/Bangkok) and making early-morning-local rows fall outside 'yesterday'.",
+      "completed_at": "2026-04-24T18:42:24.277Z"
+    },
+    {
+      "id": "T07",
+      "topic": "memory leak — closure capturing large object inside a setInterval that's never cleared",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1189
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 304
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 666
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 332
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 725
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 280
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1189
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 395
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 750
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 369
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 756
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 387
+        }
+      ],
+      "butterfly_answer": "47,231 leaked `Timeout` handles, each closing over a `DashboardSnapshot` object. `connection.js` discarded the handle returned by `startDashboardPolling`, so `clearInterval` was never called when a socket disconnected — timers (and their captured memory) accumulated until OOM.",
+      "lastN_answer": "The ESLint/Prettier conflict — likely `arrow-body-style` clashing with Prettier's formatting preferences. Fix: disable the conflicting ESLint rules and let Prettier own formatting.",
+      "needle_fact": "In src/ws/connection.js the websocket connect handler called startDashboardPolling(userId, snapshot) but discarded the returned interval handle, so the socket 'close' listener had no reference to pass to clearInterval; each reconnect leaked a setInterval whose callback closed over a context object retaining the DashboardSnapshot, accumulating ~47k live Timeouts as GC roots.",
+      "completed_at": "2026-04-24T18:45:59.830Z"
+    },
+    {
+      "id": "T08",
+      "topic": "Event listener never removed on component unmount firing on stale instance",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 882
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 264
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 645
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 249
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 538
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 212
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 882
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 391
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 765
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 383
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 666
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 379
+        }
+      ],
+      "butterfly_answer": "`handler.bind(this)` creates a new function reference each call, so the reference passed to `.off()` didn't match the one registered with `.on()` — the listener was never removed, causing it to accumulate/go stale.",
+      "lastN_answer": "The prior context doesn't mention a root cause — the conversation covers refactoring and tooling topics but no specific bug investigation or root cause diagnosis.",
+      "needle_fact": "In ChartPanel.tsx the useEffect cleanup called priceBus.off('tick', handler.bind(this)); Function.prototype.bind returns a new function reference, so the bus (which matches listeners by identity) never found and removed the original handler, leaving a listener leak on every remount.",
+      "completed_at": "2026-04-24T18:48:46.768Z"
+    },
+    {
+      "id": "T09",
+      "topic": "null vs undefined check confusion — `if (x !== null)` letting undefined through",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1045
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 238
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 672
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 229
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 574
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 252
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1045
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 347
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 774
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 342
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 680
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 355
+        }
+      ],
+      "butterfly_answer": "`tsconfig.base.json` had `\"strictNullChecks\": false`, which overrode the project-level `\"strict\": true`. That meant `undefined` wasn't caught as a type error, so the `!== null` guard in `UserProfile.tsx` let `undefined` slip through to `user.handle.toLowerCase()`, causing the crash.",
+      "lastN_answer": "The prior context doesn't identify a specific \"root cause\" for anything — the conversation was high-level observations across several topics (logging inconsistency, duplicate util files, build warnings, Prettier gaps) without drilling into any particular root cause for any of them.\n\nWhich issue were",
+      "needle_fact": "The guard `if (user.handle !== null)` in normalizeHandle() let undefined values through because `handle` was typed `string | null | undefined`, and the bug went unnoticed because tsconfig.base.json had `strictNullChecks: false` overriding the project's `strict: true`.",
+      "completed_at": "2026-04-24T18:52:07.773Z"
+    },
+    {
+      "id": "T10",
+      "topic": "circular import causing temporal dead zone — module A imports B which imports A",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1288
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 274
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 641
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 322
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 600
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 308
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1288
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 340
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 700
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 360
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 632
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 353
+        }
+      ],
+      "butterfly_answer": "Circular import between `services/auth.ts` and `models/user.ts`. A static field at `auth.ts:14` referenced `UserModel` at module evaluation time, but because of the cycle, `UserModel` hadn't been initialized yet — triggering a TDZ `ReferenceError`. esbuild's module ordering in the prod bundle expose",
+      "lastN_answer": "The prior context doesn't include a root cause — the conversation only covers cleanup decisions (console.logs, linter, error boundaries, etc.). Whatever the original issue was, it wasn't captured here.",
+      "needle_fact": "The static class field initializer `static defaultRole = UserModel.ROLES.GUEST` in services/auth.ts AuthService accessed UserModel across a circular import (auth.ts ↔ models/user.ts) during module evaluation; under esbuild's ESM semantics UserModel was still in its TDZ when the field initializer ran, throwing ReferenceError. CommonJS/ts-node hid it by returning partially-populated exports instead of enforcing TDZ.",
+      "completed_at": "2026-04-24T18:54:35.196Z"
+    },
+    {
+      "id": "T11",
+      "topic": "timing race — same clock function called twice across an assertion boundary",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1804
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 341
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 593
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 126
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 503
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 211
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1804
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 381
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 626
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 370
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 740
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 392
+        }
+      ],
+      "butterfly_answer": "Double `_now_ms()` call across `allow()` and `remaining()` — the two calls happened at slightly different times, causing clock skew between them.",
+      "lastN_answer": "The prior context doesn't include any root cause discussion — the conversation was entirely about code style cleanup (naming conventions, lint rules, jest output, prettier). If a root cause was identified, it was in an earlier part of the conversation not included here.",
+      "needle_fact": "SlidingWindowLimiter.allow and SlidingWindowLimiter.remaining each called self._now_ms() independently, so they evaluated the eviction cutoff against two different timestamps — allow evicted against T1 and remaining re-evicted against a later T2, causing them to disagree about which hits were in-window and producing a remaining count inconsistent with the state allow had just established.",
+      "completed_at": "2026-04-24T18:57:30.542Z"
+    },
+    {
+      "id": "T12",
+      "topic": "off-by-one error in a loop bound (<= vs <)",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 919
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 254
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 507
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 165
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 479
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 140
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 919
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 359
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 605
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 329
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 636
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 365
+        }
+      ],
+      "butterfly_answer": "Off-by-one in `process_batch` (`etl/pipeline.py:87`): `range(n+1)` iterated `n+1` times instead of `n`, so the last iteration processed an out-of-bounds index. Fixed by changing to `range(n)`.",
+      "lastN_answer": "The prior context doesn't state what the root cause was — the conversation was entirely tangents. Never surfaced.",
+      "needle_fact": "The root cause was that a PR titled 'fix: ensure last record processed' changed `for i in range(n)` to `for i in range(n + 1)` in process_batch at etl/pipeline.py:87, based on a misunderstanding of Python's half-open range semantics — `range(n)` already covers all valid indices 0..n-1 of a list of length n, so the change caused an IndexError on `records[n]`. The bug was missed by tests because test_process_batch used a MagicMock whose __getitem__ returned a valid value for any index.",
+      "completed_at": "2026-04-24T19:00:15.189Z"
+    },
+    {
+      "id": "T13",
+      "topic": "missing await on async function call causing test assertion to run before promise resolves",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 960
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 272
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 703
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 239
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 670
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 360
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 960
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 397
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 821
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 394
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 818
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 386
+        }
+      ],
+      "butterfly_answer": "Missing `await` on `createUser` in the test, and the same pattern in `webhookHandler.ts` where `processEvent` wasn't awaited — causing the handler to return 200 before the async work completed.",
+      "lastN_answer": "The prior context doesn't include a root cause investigation — the conversation covered `as const` typing, prettier on test files, silent error swallowing in retry logic, and utils file size. Nothing points to a specific root cause. You may be thinking of a different thread.",
+      "needle_fact": "The test in tests/integration/users.test.ts called the async function createUser (defined in src/services/userService.ts) without awaiting it, so findByEmail ran before the db.users.insert promise resolved, causing the assertion to see undefined.",
+      "completed_at": "2026-04-24T19:03:36.782Z"
+    },
+    {
+      "id": "T14",
+      "topic": "shared mutable state — module-level singleton accumulating across tests",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1082
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 298
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 818
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 211
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 602
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 276
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1082
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 393
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 906
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 373
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 757
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 384
+        }
+      ],
+      "butterfly_answer": "Two things combined:\n\n1. `events = []` was defined at class scope, so all instances shared the same list.\n2. `_default_tracker` singleton was never reset between tests.",
+      "lastN_answer": "The prior context doesn't include that detail — it starts with \"that's fixed\" but never states what the issue was or its root cause.",
+      "needle_fact": "In analytics/event_tracker.py, `events = []` was declared at class scope on EventTracker instead of inside __init__, so all instances shared one list; combined with the module-level `_default_tracker` singleton that was never reset between tests, events accumulated across the whole suite. pytest-randomly (added 16 days prior) exposed the latent bug by changing test order.",
+      "completed_at": "2026-04-24T19:06:26.413Z"
+    },
+    {
+      "id": "T15",
+      "topic": "unicode normalization mismatch — NFC vs NFD comparison failing",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1100
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 266
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 612
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 298
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 670
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 219
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1100
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 316
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 656
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 340
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 705
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 365
+        }
+      ],
+      "butterfly_answer": "NFD/NFC Unicode normalization mismatch. The CSV import script wrote display names in NFD form (decomposed characters), but the browser sends NFC (composed), so string comparisons in `getUserByDisplayName` never matched.",
+      "lastN_answer": "No root cause was discussed in the prior context — the conversation was entirely about code style decisions. If you're referring to something else, you'd need to share that context.",
+      "needle_fact": "The CSV import path in scripts/importContacts.ts inserted Apple-exported names in NFD form (decomposed, e.g. 'e'+U+0301) while the web signup form wrote NFC (precomposed U+00E9), so Postgres `=` comparison on users.display_name failed for visually identical strings.",
+      "completed_at": "2026-04-24T19:09:12.564Z"
+    },
+    {
+      "id": "T16",
+      "topic": "timezone offset bug — date constructed in local time but compared in UTC",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1335
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 347
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 759
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 327
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 791
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 342
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1335
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 392
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 798
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 364
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 822
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 336
+        }
+      ],
+      "butterfly_answer": "`scripts/backfill_renewals.ts` used `new Date(y,m,d)` on a Bangkok (UTC+7) machine. JavaScript's `Date` constructor interprets bare date arguments in local time, so instead of storing `00:00 UTC` it stored `17:00 UTC`. The scheduler queries `renewal_date <= todayUTC`, so those rows satisfy the condi",
+      "lastN_answer": "The prior context doesn't include it. The conversation references \"the current fix\" and \"the main fix is solid,\" but the actual bug and its root cause were never stated in the excerpt provided.",
+      "needle_fact": "The backfill script `scripts/backfill_renewals.ts` used `new Date(year, month, day)` which constructs a Date in the runtime's local timezone. It was executed from a developer laptop set to Asia/Bangkok (UTC+7), so midnight-Bangkok serialized as 17:00 UTC the previous day, making those rows match the scheduler's UTC-midnight comparison seven hours early.",
+      "completed_at": "2026-04-24T19:11:54.881Z"
+    },
+    {
+      "id": "T17",
+      "topic": "memory leak — closure capturing large object inside a setInterval that's never cleared",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1230
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 317
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 685
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 293
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 583
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 223
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1230
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 349
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 710
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 388
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 671
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 387
+        }
+      ],
+      "butterfly_answer": "The `setInterval` heartbeat in `src/ws/session.js` was never cleared when the session closed. Its closure held a reference to `sessionState` (~2MB), so every closed session leaked that memory — the interval kept running and the GC couldn't collect the state.",
+      "lastN_answer": "The prior context doesn't mention a root cause — the conversation was entirely about code quality items (error messages, naming, dependencies, test file size, eslint). No bug or incident root cause came up.",
+      "needle_fact": "The setInterval heartbeat in onConnection (src/ws/session.js) is never cleared on socket close — its closure captures sessionState, retaining the ~2MB initialPayload buffer per disconnected session.",
+      "completed_at": "2026-04-24T19:14:15.341Z"
+    },
+    {
+      "id": "T18",
+      "topic": "event listener never removed on component unmount, firing on stale instance",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 867
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 260
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 586
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 235
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 591
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 260
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 867
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 327
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 646
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 382
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 731
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 392
+        }
+      ],
+      "butterfly_answer": "`.bind(this)` in `socketClient.js:5` — it created a new function reference each time, so `off()` could never match the original listener to remove it.",
+      "lastN_answer": "The prior context doesn't include it — the conversation only covers style and config discussions (file extensions, arrow vs function declarations, prettier line length, timestamps, logging libraries). No root cause was mentioned.",
+      "needle_fact": "In socketClient.js, the `on()` method called `fn.bind(this)` before pushing to the listeners array, so `off()`'s `l !== fn` filter could never match the stored (bound) reference — every unmount left the listener in place.",
+      "completed_at": "2026-04-24T19:16:36.604Z"
+    },
+    {
+      "id": "T19",
+      "topic": "null vs undefined check confusion — `if (x !== null)` letting undefined through",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1105
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 213
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 559
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 172
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 512
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 293
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1105
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 369
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 708
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 339
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 672
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 384
+        }
+      ],
+      "butterfly_answer": "`.toLowerCase()` was called on `handle` without checking if it existed first. The field was typed as optional (`handle?: string`) but the code assumed it was always present, so when it was `undefined`, the call threw a `TypeError`.",
+      "lastN_answer": "The prior context doesn't include that — it picks up mid-conversation after the root cause discussion had already happened. I don't have it.",
+      "needle_fact": "In `normalizeHandle` in src/components/UserProfile.tsx, the guard `if (handle !== null)` let `undefined` through because strict inequality `!==` against `null` does not cover `undefined`, so `.toLowerCase()` was called on `undefined`; the `Promise<any>` return type of `fetchUser` hid this from the type checker.",
+      "completed_at": "2026-04-24T19:19:44.821Z"
+    },
+    {
+      "id": "T20",
+      "topic": "circular import causing temporal dead zone — module A imports B which imports A",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1175
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 301
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 628
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 181
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 472
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 240
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1175
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 390
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 710
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 394
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 678
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 400
+        }
+      ],
+      "butterfly_answer": "`auth.ts` and `user.ts` were importing from each other directly, creating a circular dependency that caused module initialization order issues at runtime.",
+      "lastN_answer": "The prior context doesn't mention a specific root cause — the conversation covered several unrelated topics (webpack warnings, linting, logger style, eslint version, prettier) without diagnosing any single underlying issue.",
+      "needle_fact": "The top-level `export const auth = new AuthService()` in src/services/auth.ts ran during module evaluation and called `new UserService()`, but user.ts's class declaration was still in the TDZ because user.ts's evaluation was paused on its circular import of auth.ts.",
+      "completed_at": "2026-04-24T19:22:23.600Z"
+    },
+    {
+      "id": "T21",
+      "topic": "timing race — same clock function called twice across an assertion boundary",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1483
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 338
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 721
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 275
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 707
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 331
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1483
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 355
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 732
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 377
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 802
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 387
+        }
+      ],
+      "butterfly_answer": "Double `time.time()` call: `now` was computed once to append the timestamp, but `window_start` was recalculated from a second `time.time()` call moments later. If the clock ticked between the two calls, the stored timestamp could fall outside the recalculated window, causing spurious failures.",
+      "lastN_answer": "The prior context doesn't identify a root cause for anything — the CI slowdown was speculative (test count creep, serialized runners, I/O in hooks), never diagnosed. Nothing else in that conversation had a root cause pinned down either.",
+      "needle_fact": "RateLimiter.allow called time.time() twice per invocation — once for window_start and once in timestamps.append(time.time()) — so the appended timestamp was slightly later than the 'now' used for the boundary, causing the first stored entry to fall outside window_start on the 6th call and letting an extra request through.",
+      "completed_at": "2026-04-24T19:26:01.974Z"
+    },
+    {
+      "id": "T22",
+      "topic": "off-by-one error in a loop bound in a ring buffer consumer",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1711
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 330
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 656
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 312
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 629
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 302
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1711
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 336
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 655
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 343
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 653
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 398
+        }
+      ],
+      "butterfly_answer": "Two issues:\n\n1. **`peek_last` off-by-one** — `range(self.head, self.tail + 1)` should be `range(self.head, self.tail)` (the `+ 1` caused an out-of-bounds read). Already fixed.\n2. **`on_push` bumping `buf.head`** — it increments `buf.head += 1` after `audit_log`, which corrupts the buffer's read posi",
+      "lastN_answer": "The prior context doesn't identify a single \"root cause\" for any overarching problem. The only cause-effect mentioned is the CI linting taking 45 seconds — attributed to prettier and eslint running sequentially instead of in parallel. If you're asking about something else, it wasn't covered in that ",
+      "needle_fact": "The root cause was an off-by-one in RingBufferConsumer.peek_last in src/transport/ring_buffer.py: the loop used range(self.head, self.tail + 1) instead of range(self.head, self.tail), reading one slot past the exclusive tail. Combined with on_push's buf.head += 1 side effect when peek_last returned a non-None value (which happened once the buffer wrapped), this silently advanced head past an unread message, causing drain to miss msg0.",
+      "completed_at": "2026-04-24T19:28:54.662Z"
+    },
+    {
+      "id": "T23",
+      "topic": "missing await on async function call causing promise to resolve after assertion",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1189
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 278
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 663
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 304
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 591
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 201
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1189
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 353
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 732
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 379
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 659
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 358
+        }
+      ],
+      "butterfly_answer": "Missing `await` on an async call inside `registerUser` test, and the test function itself wasn't marked `async`. The promise was floating, so the assertion ran before the operation completed — causing intermittent failures.",
+      "lastN_answer": "The prior context doesn't mention a root cause for anything — the conversation covered Jest log noise, linting config, and type narrowing, but no root cause was identified or discussed.",
+      "needle_fact": "In src/test/register.test.js line 3, the test called registerUser('user@example.com', 'pw123') without await, so `user` was the unresolved Promise from the async function and `user.email` was undefined; the assertion error surfaced as an unhandled rejection after Mocha had already marked the test as passing.",
+      "completed_at": "2026-04-24T19:31:28.522Z"
+    },
+    {
+      "id": "T24",
+      "topic": "shared mutable state — module-level singleton accumulating across tests",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1085
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 288
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 837
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 199
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 581
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 164
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1085
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 369
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 911
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 372
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 748
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 399
+        }
+      ],
+      "butterfly_answer": "Mutable default arguments in Python — e.g., `roles=[]` in `User.__init__`. Python evaluates default values once at function definition time, so the same list object is shared across all calls that use the default, causing unintended state bleed between instances.",
+      "lastN_answer": "The prior context doesn't include what root cause was found — it only shows the code style discussion that followed. Whatever was discovered isn't captured here.",
+      "needle_fact": "The root cause was a mutable default argument `roles=[]` in `User.__init__` — Python evaluates default arguments once at function definition time, so every User() instance that omitted the roles argument shared the same list object, causing roles to accumulate across tests.",
+      "completed_at": "2026-04-24T19:34:18.344Z"
+    },
+    {
+      "id": "T25",
+      "topic": "unicode normalization mismatch — NFC vs NFD comparison failing",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1437
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 363
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 645
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 347
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 771
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 324
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1437
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 389
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 665
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 381
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 799
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 377
+        }
+      ],
+      "butterfly_answer": "NFD/NFC Unicode mismatch: user input was stored in NFD form (e.g., `café` as `cafe` + combining accent), but search queries arrived in NFC form (precomposed `é`), so Postgres byte comparison saw them as different strings.",
+      "lastN_answer": "The prior context doesn't include a root cause — the conversation covered code style, a comment about timeout behavior, and linting. Whatever the underlying bug was, it wasn't discussed in what's been shared here.",
+      "needle_fact": "Root cause: signup inserts in routes/signup.ts stored display_name as-is, so macOS/iOS clients wrote NFD (decomposed, e + U+0301) while the search bar query arrived as NFC (precomposed U+00E9), making Postgres `=` comparison fail on visually identical strings. Fix: normalize('NFC') on both write and read paths, backfill existing rows, and add CHECK (display_name IS NFC NORMALIZED).",
+      "completed_at": "2026-04-24T19:37:21.742Z"
+    },
+    {
+      "id": "T26",
+      "topic": "timezone offset bug — date constructed in local time but compared in UTC",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1294
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 383
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 768
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 237
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 615
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 260
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1294
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 389
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 767
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 384
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 755
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 371
+        }
+      ],
+      "butterfly_answer": "The `bucketByDay` function was grouping events by UTC date instead of the report's local timezone. Events near midnight in Bangkok were falling into the wrong day because the key was derived from the UTC timestamp rather than the local wall-clock date.",
+      "lastN_answer": "The prior context doesn't identify a root cause for anything — the `--experimental-loader` warning was noted as pre-existing but not investigated. No diagnosis was reached.",
+      "needle_fact": "bucketByDay in src/reports/dailyBucket.js built the day key via new Date(ev.createdAt.getFullYear(), getMonth(), getDate()) then toISOString().slice(0,10); on a UTC server those getters return the UTC calendar date, so events were bucketed by UTC day but presented as the user's local day, causing a 7-hour spillover into the previous day for Bangkok users",
+      "completed_at": "2026-04-24T19:39:52.708Z"
+    },
+    {
+      "id": "T27",
+      "topic": "memory leak from closure capturing large object inside setInterval never cleared",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1152
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 346
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 682
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 311
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 597
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 320
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1152
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 338
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 667
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 400
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 679
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 366
+        }
+      ],
+      "butterfly_answer": "`setInterval` in a `useEffect` with no cleanup function, combined with the callback closing over `snapshotBuffer`. React 18 Strict Mode's double-invoke plus route navigation accumulated multiple intervals, each retaining that 40MB array — hence the leak.",
+      "lastN_answer": "The prior context doesn't include it — the root cause was never stated in the conversation shared with me. You'd need to re-share that part.",
+      "needle_fact": "The useEffect in DashboardMetrics set up a setInterval without returning a cleanup function, so clearInterval was never called; the interval callback's closure captured the snapshotBuffer array from the initial render, pinning that growing array in memory for the life of the tab (and multiplied across remounts).",
+      "completed_at": "2026-04-24T19:42:26.539Z"
+    },
+    {
+      "id": "T28",
+      "topic": "event listener never removed on component unmount, firing on stale instance",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1317
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 400
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 860
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 351
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 710
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 303
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1317
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 388
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 842
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 356
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 709
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 380
+        }
+      ],
+      "butterfly_answer": "`.bind(this)` in lifecycle methods creates a new function reference on every call, so the reference passed to `removeEventListener` / `priceStream.off` never matched the one that was registered — listeners accumulated and were never cleaned up.",
+      "lastN_answer": "The prior context doesn't identify a root cause for anything. The CI timeout flakiness was flagged as possibly resource contention or test order sensitivity, but never diagnosed. No root cause was established.",
+      "needle_fact": "Calling this.handleResize.bind(this) inside componentDidMount and again inside componentWillUnmount produces two different function references, so window.removeEventListener and priceStream.off never actually detach the original listeners registered at mount time.",
+      "completed_at": "2026-04-24T19:45:19.749Z"
+    },
+    {
+      "id": "T29",
+      "topic": "null vs undefined check confusion — `if (x !== null)` letting undefined through",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 1,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1162
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 331
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 721
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 334
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 751
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 372
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1162
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 310
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 693
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 383
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 793
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 363
+        }
+      ],
+      "butterfly_answer": "The guard `discount !== null` passes when `discount` is `undefined` — Apollo returns `undefined` for absent cache fields, not `null`. The `applyPromoCode` optimistic response (added last Tuesday) omitted `discount` entirely, causing a cache eviction that left the field `undefined`. So `.amount.toFix",
+      "lastN_answer": "The prior context doesn't mention a root cause — the conversation covered `readonly` vs `as const`, ESLint config, `console.error` cleanup, and hoisting timeout constants. No root cause was discussed.",
+      "needle_fact": "The guard `if (discount !== null)` in CartSummary.tsx line ~47 only filtered null, not undefined; Apollo returned `undefined` for the `discount` field because a recently-added optimistic response for `applyPromoCode` omitted the field from its payload, leaving it absent (undefined) in the cache — so `undefined !== null` passed the guard and `.amount.toFixed(2)` crashed.",
+      "completed_at": "2026-04-24T19:48:01.975Z"
+    },
+    {
+      "id": "T30",
+      "topic": "circular import causing temporal dead zone — module A imports B which imports A",
+      "question": "Quick reminder — what was the actual root cause?",
+      "butterfly": 0,
+      "lastN": 0,
+      "butterfly_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1228
+        },
+        {
+          "gen": 1,
+          "kind": "rebuilt",
+          "tokens": 346
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 712
+        },
+        {
+          "gen": 2,
+          "kind": "rebuilt",
+          "tokens": 235
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 599
+        },
+        {
+          "gen": 3,
+          "kind": "rebuilt",
+          "tokens": 227
+        }
+      ],
+      "lastN_trace": [
+        {
+          "gen": 0,
+          "kind": "initial",
+          "tokens": 1228
+        },
+        {
+          "gen": 1,
+          "kind": "truncated",
+          "tokens": 375
+        },
+        {
+          "gen": 1,
+          "kind": "after-noise",
+          "tokens": 734
+        },
+        {
+          "gen": 2,
+          "kind": "truncated",
+          "tokens": 359
+        },
+        {
+          "gen": 2,
+          "kind": "after-noise",
+          "tokens": 716
+        },
+        {
+          "gen": 3,
+          "kind": "truncated",
+          "tokens": 388
+        }
+      ],
+      "butterfly_answer": "The circular import between `auth-middleware.ts` and `user-service.ts` — each file was importing from the other, creating a dependency cycle. The fix was extracting the shared `TokenValidator` logic into a neutral third file (`services/token-validator.ts`) that both could import without referencing ",
+      "lastN_answer": "The prior context doesn't mention a root cause — the conversation was entirely about cleanup items (variable naming, logging, linter config, unused package). No bug investigation or root cause analysis appears anywhere in it.",
+      "needle_fact": "The root cause was a circular import between auth-middleware.ts and services/user-service.ts: the top-level `export const authMiddleware = new AuthMiddleware()` on line 14 of auth-middleware.ts instantiated AuthMiddleware at module-evaluation time, which referenced UserService while user-service.ts was still mid-evaluation, so UserService was in its temporal dead zone and ESM threw ReferenceError (CJS dev builds hid it by returning a partial exports object).",
+      "completed_at": "2026-04-24T19:50:30.688Z"
+    }
+  ]
+}

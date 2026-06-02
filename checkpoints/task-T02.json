@@ -1,0 +1,75 @@
+{
+  "id": "T02",
+  "topic": "off-by-one error in a loop bound (using <= where < was intended)",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1017
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 263
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 624
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 280
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 602
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 300
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1017
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 391
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 745
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 398
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 714
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 394
+    }
+  ],
+  "butterfly_answer": "`range(0, 25)` included hour 24, which is the first bucket of the **next day**. That off-by-one meant every daily aggregate counted 25 hours instead of 24, causing ~4.17% overcount.",
+  "lastN_answer": "The prior context doesn't mention a root cause — the conversation only covers PR cleanup decisions (callbacks, eslint versioning, logger style, commit squashing). If a root cause was discussed, it wasn't included in the context provided to me.",
+  "needle_fact": "In aggregate_daily, the loop was written as `for h in range(0, 25)` instead of `range(0, 24)`, so it included h=24 which maps to day_start_ts + 24*3600 — the 00:00 bucket of the *next* day. When that bucket existed in hourly_buckets, it was double-counted into today's total, causing a consistent ~4.17% (1/24) overcount. The bug only surfaced after the rollup cron moved from 00:05 to 01:30, giving the next-day bucket time to exist.",
+  "completed_at": "2026-04-24T18:30:44.892Z"
+}

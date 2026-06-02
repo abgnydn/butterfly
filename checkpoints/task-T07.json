@@ -1,0 +1,75 @@
+{
+  "id": "T07",
+  "topic": "memory leak — closure capturing large object inside a setInterval that's never cleared",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1189
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 304
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 666
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 332
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 725
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 280
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1189
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 395
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 750
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 369
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 756
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 387
+    }
+  ],
+  "butterfly_answer": "47,231 leaked `Timeout` handles, each closing over a `DashboardSnapshot` object. `connection.js` discarded the handle returned by `startDashboardPolling`, so `clearInterval` was never called when a socket disconnected — timers (and their captured memory) accumulated until OOM.",
+  "lastN_answer": "The ESLint/Prettier conflict — likely `arrow-body-style` clashing with Prettier's formatting preferences. Fix: disable the conflicting ESLint rules and let Prettier own formatting.",
+  "needle_fact": "In src/ws/connection.js the websocket connect handler called startDashboardPolling(userId, snapshot) but discarded the returned interval handle, so the socket 'close' listener had no reference to pass to clearInterval; each reconnect leaked a setInterval whose callback closed over a context object retaining the DashboardSnapshot, accumulating ~47k live Timeouts as GC roots.",
+  "completed_at": "2026-04-24T18:45:59.830Z"
+}

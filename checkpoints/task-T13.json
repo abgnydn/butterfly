@@ -1,0 +1,75 @@
+{
+  "id": "T13",
+  "topic": "missing await on async function call causing test assertion to run before promise resolves",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 960
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 272
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 703
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 239
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 670
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 360
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 960
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 397
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 821
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 394
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 818
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 386
+    }
+  ],
+  "butterfly_answer": "Missing `await` on `createUser` in the test, and the same pattern in `webhookHandler.ts` where `processEvent` wasn't awaited — causing the handler to return 200 before the async work completed.",
+  "lastN_answer": "The prior context doesn't include a root cause investigation — the conversation covered `as const` typing, prettier on test files, silent error swallowing in retry logic, and utils file size. Nothing points to a specific root cause. You may be thinking of a different thread.",
+  "needle_fact": "The test in tests/integration/users.test.ts called the async function createUser (defined in src/services/userService.ts) without awaiting it, so findByEmail ran before the db.users.insert promise resolved, causing the assertion to see undefined.",
+  "completed_at": "2026-04-24T19:03:36.782Z"
+}

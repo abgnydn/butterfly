@@ -19,11 +19,14 @@ const CLAUDE_BIN = process.env.CLAUDE_BIN || (() => {
 })();
 console.log(`Using claude binary: ${CLAUDE_BIN}`);
 
-function callClaude(prompt) {
+// Intermittent ENOENT on rapid-fire spawns — first call works, second fails,
+// fourth succeeds again. Looks like a brief window where the nvm-shimmed
+// binary becomes unreachable. Retry with backoff fixes it cleanly.
+function spawnClaudeOnce(prompt) {
   return new Promise((resolve, reject) => {
     const proc = spawn(CLAUDE_BIN, ["-p", "--output-format", "text"], {
       stdio: ["pipe", "pipe", "pipe"],
-      env: process.env,  // explicit env inheritance
+      env: process.env,
     });
     let out = "";
     let err = "";
@@ -41,6 +44,25 @@ function callClaude(prompt) {
     });
     proc.stdin.end(prompt);
   });
+}
+
+async function callClaude(prompt) {
+  const maxAttempts = 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await spawnClaudeOnce(prompt);
+    } catch (e) {
+      const isENOENT = e.code === "ENOENT" || /ENOENT/.test(e.message || "");
+      if (isENOENT && attempt < maxAttempts) {
+        const delay = 500 * attempt;
+        console.log(`[bridge] ENOENT on attempt ${attempt}, retrying in ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw new Error("unreachable");
 }
 
 const server = http.createServer(async (req, res) => {

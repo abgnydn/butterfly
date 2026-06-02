@@ -1,0 +1,75 @@
+{
+  "id": "T22",
+  "topic": "off-by-one error in a loop bound in a ring buffer consumer",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1711
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 330
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 656
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 312
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 629
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 302
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1711
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 336
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 655
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 343
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 653
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 398
+    }
+  ],
+  "butterfly_answer": "Two issues:\n\n1. **`peek_last` off-by-one** — `range(self.head, self.tail + 1)` should be `range(self.head, self.tail)` (the `+ 1` caused an out-of-bounds read). Already fixed.\n2. **`on_push` bumping `buf.head`** — it increments `buf.head += 1` after `audit_log`, which corrupts the buffer's read posi",
+  "lastN_answer": "The prior context doesn't identify a single \"root cause\" for any overarching problem. The only cause-effect mentioned is the CI linting taking 45 seconds — attributed to prettier and eslint running sequentially instead of in parallel. If you're asking about something else, it wasn't covered in that ",
+  "needle_fact": "The root cause was an off-by-one in RingBufferConsumer.peek_last in src/transport/ring_buffer.py: the loop used range(self.head, self.tail + 1) instead of range(self.head, self.tail), reading one slot past the exclusive tail. Combined with on_push's buf.head += 1 side effect when peek_last returned a non-None value (which happened once the buffer wrapped), this silently advanced head past an unread message, causing drain to miss msg0.",
+  "completed_at": "2026-04-24T19:28:54.662Z"
+}

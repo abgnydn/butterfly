@@ -1,0 +1,75 @@
+{
+  "id": "T14",
+  "topic": "shared mutable state — module-level singleton accumulating across tests",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1082
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 298
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 818
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 211
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 602
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 276
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1082
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 393
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 906
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 373
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 757
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 384
+    }
+  ],
+  "butterfly_answer": "Two things combined:\n\n1. `events = []` was defined at class scope, so all instances shared the same list.\n2. `_default_tracker` singleton was never reset between tests.",
+  "lastN_answer": "The prior context doesn't include that detail — it starts with \"that's fixed\" but never states what the issue was or its root cause.",
+  "needle_fact": "In analytics/event_tracker.py, `events = []` was declared at class scope on EventTracker instead of inside __init__, so all instances shared one list; combined with the module-level `_default_tracker` singleton that was never reset between tests, events accumulated across the whole suite. pytest-randomly (added 16 days prior) exposed the latent bug by changing test order.",
+  "completed_at": "2026-04-24T19:06:26.413Z"
+}

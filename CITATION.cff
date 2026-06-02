@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: "If you use Butterfly in academic work, please cite as below."
+type: software
+title: "Butterfly: a small-LLM context-compaction mechanism is a content-shape adapter, not a universal context manager"
+authors:
+  - family-names: Günaydın
+    given-names: Ahmet Barış
+    email: hi@barisgunaydin.com
+    affiliation: Independent researcher
+# doi: 10.5281/zenodo.XXXXXXXX   # add after the GitHub release mints it
+repository-code: "https://github.com/abgnydn/butterfly"
+license: MIT
+version: 0.1.0
+date-released: 2026-06-02
+keywords:
+  - context compaction
+  - context window management
+  - small language models
+  - Phi-3
+  - long-context
+  - LongMemEval
+  - pre-registration
+  - falsification
+  - reproducible research
+  - LLM agents
+abstract: >-
+  Butterfly is a falsification study of a tag-and-rebuild context-compaction
+  loop for small language models. Conversation messages are tagged
+  keep/summarize/melt, surviving content is rebuilt into a tight token budget,
+  off-topic noise is injected, and the loop repeats across generations. The
+  study pre-registers, refutes its own first pre-registration, confirms a
+  second, then hardens the result across a regex tagger, a 45-parameter
+  softmax classifier, a 768-dimensional embedding head, and frontier
+  instruction-tuned LLM taggers. The mechanism beats last-N truncation at
+  tight budgets under compounding noise only when the tagger's prior matches
+  the load-bearing-content distribution; on adversarial prose-needle
+  transcripts every tagger fails. The directional finding reproduces against
+  the external LongMemEval benchmark across three orders of magnitude of
+  context size. Conclusion: the mechanism is a content-shape adapter — the
+  engineering problem is the tagger, not the rebuild step. The work ran inside
+  the neuropulse browser visualizer (github.com/abgnydn/neuropulse).

@@ -1,0 +1,75 @@
+{
+  "id": "T20",
+  "topic": "circular import causing temporal dead zone — module A imports B which imports A",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1175
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 301
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 628
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 181
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 472
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 240
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1175
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 390
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 710
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 394
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 678
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 400
+    }
+  ],
+  "butterfly_answer": "`auth.ts` and `user.ts` were importing from each other directly, creating a circular dependency that caused module initialization order issues at runtime.",
+  "lastN_answer": "The prior context doesn't mention a specific root cause — the conversation covered several unrelated topics (webpack warnings, linting, logger style, eslint version, prettier) without diagnosing any single underlying issue.",
+  "needle_fact": "The top-level `export const auth = new AuthService()` in src/services/auth.ts ran during module evaluation and called `new UserService()`, but user.ts's class declaration was still in the TDZ because user.ts's evaluation was paused on its circular import of auth.ts.",
+  "completed_at": "2026-04-24T19:22:23.600Z"
+}

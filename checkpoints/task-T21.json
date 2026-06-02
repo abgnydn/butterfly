@@ -1,0 +1,75 @@
+{
+  "id": "T21",
+  "topic": "timing race — same clock function called twice across an assertion boundary",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1483
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 338
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 721
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 275
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 707
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 331
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1483
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 355
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 732
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 377
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 802
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 387
+    }
+  ],
+  "butterfly_answer": "Double `time.time()` call: `now` was computed once to append the timestamp, but `window_start` was recalculated from a second `time.time()` call moments later. If the clock ticked between the two calls, the stored timestamp could fall outside the recalculated window, causing spurious failures.",
+  "lastN_answer": "The prior context doesn't identify a root cause for anything — the CI slowdown was speculative (test count creep, serialized runners, I/O in hooks), never diagnosed. Nothing else in that conversation had a root cause pinned down either.",
+  "needle_fact": "RateLimiter.allow called time.time() twice per invocation — once for window_start and once in timestamps.append(time.time()) — so the appended timestamp was slightly later than the 'now' used for the boundary, causing the first stored entry to fall outside window_start on the 6th call and letting an extra request through.",
+  "completed_at": "2026-04-24T19:26:01.974Z"
+}

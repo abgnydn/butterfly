@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Butterfly — How Memories Survive</title>
+<style>
+  :root {
+    --bg-1:#0a0820; --bg-2:#1a1535;
+    --ink:#faf6e9;
+    --accent:#ffd93d;
+    --lavender:#b794f6;
+    --orange:#ff8c42;
+    --teal:#5fd8d4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; background: var(--bg-1); color: var(--ink); }
+  #three { position: fixed; inset: 0; display: block; }
+  #ui { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 24px; }
+  #ui > * { pointer-events: auto; }
+
+  /* Top-bar: title + progress */
+  #topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  #title { font-size: 18px; font-weight: 600; letter-spacing: 2px; opacity: 0.6; text-transform: uppercase; }
+  #progress { display: flex; gap: 10px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(250, 246, 233, 0.18); transition: all 220ms ease; cursor: pointer; }
+  .dot.active { background: var(--accent); transform: scale(1.3); box-shadow: 0 0 12px var(--accent); }
+  .dot.done { background: rgba(250, 246, 233, 0.45); }
+
+  /* Center narrator card */
+  #narrator { align-self: center; max-width: 620px; width: 100%; padding: 18px 24px; backdrop-filter: blur(20px); background: rgba(20, 16, 50, 0.55); border: 1px solid rgba(250, 246, 233, 0.12); border-radius: 18px; text-align: center; transition: opacity 400ms ease, transform 400ms ease; }
+  #narrator.hidden { opacity: 0; transform: translateY(-12px); pointer-events: none; }
+  #narrator h2 { font-size: 22px; font-weight: 600; margin-bottom: 6px; color: var(--accent); }
+  #narrator p { font-size: 17px; line-height: 1.5; opacity: 0.92; }
+
+  /* Controls panel — appears at scene-specific times */
+  #controls { align-self: center; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; min-height: 60px; }
+  .btn { background: rgba(250, 246, 233, 0.06); color: var(--ink); border: 1px solid rgba(250, 246, 233, 0.18); padding: 12px 22px; font-size: 16px; font-weight: 500; border-radius: 14px; cursor: pointer; transition: all 200ms ease; backdrop-filter: blur(8px); }
+  .btn:hover { background: rgba(250, 246, 233, 0.12); transform: translateY(-2px); }
+  .btn:active { transform: translateY(0); }
+  .btn.primary { background: linear-gradient(135deg, var(--orange), #ff6b6b); border: none; box-shadow: 0 6px 24px rgba(255, 140, 66, 0.3); }
+  .btn.primary:hover { box-shadow: 0 8px 32px rgba(255, 140, 66, 0.5); }
+  .btn.smell { font-size: 22px; padding: 10px 18px; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+
+  /* Bottom: nav + progress */
+  #bottombar { display: flex; align-items: center; justify-content: space-between; }
+  #scene-label { font-size: 13px; opacity: 0.55; letter-spacing: 1.5px; text-transform: uppercase; }
+  #nav { display: flex; gap: 10px; }
+
+  /* Title screen overlay */
+  #intro { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: linear-gradient(135deg, var(--bg-1), var(--bg-2)); z-index: 100; padding: 40px; transition: opacity 800ms ease; }
+  #intro.gone { opacity: 0; pointer-events: none; }
+  #intro h1 { font-size: clamp(48px, 9vw, 110px); font-weight: 200; letter-spacing: -2px; margin-bottom: 14px; background: linear-gradient(135deg, var(--lavender), var(--orange), var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  #intro p { font-size: clamp(16px, 2.4vw, 22px); opacity: 0.7; max-width: 600px; line-height: 1.5; margin-bottom: 32px; }
+
+  /* Tooltip when hovering imaginal cells */
+  #tooltip { position: fixed; pointer-events: none; padding: 6px 12px; background: rgba(255, 217, 61, 0.95); color: #0a0820; font-size: 13px; font-weight: 600; border-radius: 8px; transform: translate(-50%, -120%); opacity: 0; transition: opacity 150ms ease; white-space: nowrap; z-index: 50; }
+  #tooltip.visible { opacity: 1; }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    #ui { padding: 16px; }
+    #narrator { padding: 14px 18px; }
+    #narrator h2 { font-size: 18px; }
+    #narrator p { font-size: 15px; }
+    .btn { padding: 10px 16px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="three"></canvas>
+  <div id="tooltip"></div>
+
+  <div id="intro">
+    <h1>Butterfly</h1>
+    <p>How a memory can melt into soup, become a brand new body, and still remember what mattered.</p>
+    <button class="btn primary" id="start-btn">Begin →</button>
+  </div>
+
+  <div id="ui">
+    <div id="topbar">
+      <div id="title">Butterfly</div>
+      <div id="progress">
+        <div class="dot active" data-step="0"></div>
+        <div class="dot" data-step="1"></div>
+        <div class="dot" data-step="2"></div>
+        <div class="dot" data-step="3"></div>
+        <div class="dot" data-step="4"></div>
+        <div class="dot" data-step="5"></div>
+      </div>
+    </div>
+
+    <div id="narrator">
+      <h2 id="narr-title">Meet a caterpillar</h2>
+      <p id="narr-text">Inside this little crawly body are tiny glowing dots. Scientists call them <strong>imaginal cells</strong>. Every caterpillar has them. They're the seeds of who the caterpillar will become.</p>
+    </div>
+
+    <div id="controls"></div>
+
+    <div id="bottombar">
+      <div id="scene-label">Step 1 of 6 — caterpillar</div>
+      <div id="nav">
+        <button class="btn" id="back-btn" disabled>← Back</button>
+        <button class="btn primary" id="next-btn">Next →</button>
+      </div>
+    </div>
+  </div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.164.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.164.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass }     from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass }     from "three/addons/postprocessing/OutputPass.js";
+
+/* ──────────── Three.js setup ──────────── */
+
+const canvas   = document.getElementById("three");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x0a0820, 1);
+
+const scene  = new THREE.Scene();
+scene.fog    = new THREE.FogExp2(0x0a0820, 0.04);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 200);
+camera.position.set(0, 1.2, 8);
+
+// Lighting — soft fill + key
+scene.add(new THREE.AmbientLight(0x6b6090, 0.6));
+const key = new THREE.DirectionalLight(0xffffff, 0.9);
+key.position.set(3, 5, 4);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xb794f6, 0.4);
+rim.position.set(-4, 2, -2);
+scene.add(rim);
+
+// Bloom for the magical glow
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.6, 0.2);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// Background star particles for ambient feel
+function makeStars(count) {
+  const geo = new THREE.BufferGeometry();
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    positions[i*3]   = (Math.random() - 0.5) * 60;
+    positions[i*3+1] = (Math.random() - 0.5) * 30;
+    positions[i*3+2] = (Math.random() - 0.5) * 40 - 10;
+  }
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xfaf6e9, size: 0.02, transparent: true, opacity: 0.4, sizeAttenuation: true });
+  return new THREE.Points(geo, mat);
+}
+scene.add(makeStars(800));
+
+/* ──────────── Imaginal cells (the load-bearing concept) ──────────── */
+// Bright glowing spheres. Each one represents a memory.
+// Most are dim. The one that "learned lavender" gets bright purple.
+// They survive metamorphosis intact.
+
+const IMAGINAL_COUNT = 14;
+const imaginalGroup  = new THREE.Group();
+const imaginal       = []; // {mesh, basePos, color, brightness, label}
+
+const COLORS = {
+  dim:      new THREE.Color(0xffd93d),
+  lavender: new THREE.Color(0xb794f6),
+  apple:    new THREE.Color(0xff6b6b),
+  mint:     new THREE.Color(0x5fd8d4),
+};
+
+function makeImaginalCell(pos, label) {
+  const geo = new THREE.SphereGeometry(0.07, 16, 16);
+  const mat = new THREE.MeshBasicMaterial({ color: COLORS.dim, transparent: true, opacity: 0.9 });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.copy(pos);
+  // Small glow halo via second sphere
+  const halo = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 16, 16),
+    new THREE.MeshBasicMaterial({ color: COLORS.dim, transparent: true, opacity: 0.18, side: THREE.BackSide })
+  );
+  m.add(halo);
+  m.userData = { halo, baseColor: COLORS.dim.clone(), brightness: 1, label };
+  imaginal.push(m);
+  imaginalGroup.add(m);
+  return m;
+}
+scene.add(imaginalGroup);
+
+/* ──────────── Caterpillar — segmented body ──────────── */
+const caterpillar = new THREE.Group();
+const SEG_COUNT   = 7;
+const segMeshes   = [];
+for (let i = 0; i < SEG_COUNT; i++) {
+  const t = i / (SEG_COUNT - 1);
+  const r = 0.4 - Math.abs(t - 0.5) * 0.2; // fatter middle, thinner ends
+  const geo = new THREE.SphereGeometry(r, 24, 24);
+  const mat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(0x9bcb3c).lerp(new THREE.Color(0x66a83a), t),
+    roughness: 0.6,
+    metalness: 0.05,
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.x = (i - (SEG_COUNT - 1) / 2) * 0.6;
+  caterpillar.add(m);
+  segMeshes.push(m);
+}
+// Eyes (two small dark spheres on the head — first segment)
+const head = segMeshes[0];
+[-1, 1].forEach(side => {
+  const eye = new THREE.Mesh(
+    new THREE.SphereGeometry(0.06, 12, 12),
+    new THREE.MeshStandardMaterial({ color: 0x0a0820, roughness: 0.2 })
+  );
+  eye.position.set(-0.18, 0.18, 0.22 * side);
+  head.add(eye);
+});
+scene.add(caterpillar);
+
+// Place imaginal cells distributed inside the caterpillar's body
+for (let i = 0; i < IMAGINAL_COUNT; i++) {
+  const t = i / (IMAGINAL_COUNT - 1);
+  const x = (t - 0.5) * 3.6;                   // along body
+  const y = (Math.random() - 0.5) * 0.3;
+  const z = (Math.random() - 0.5) * 0.3;
+  const cell = makeImaginalCell(new THREE.Vector3(x, y, z), `cell-${i}`);
+  // Attach to caterpillar group so it follows
+  caterpillar.add(cell);
+}
+
+/* ──────────── Smell particles (lavender / apple / mint) ──────────── */
+const smellGroups = {};
+function makeSmellCloud(color, label) {
+  const geo = new THREE.BufferGeometry();
+  const N = 200;
+  const positions = new Float32Array(N * 3);
+  const offsets   = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 0.2 + Math.random() * 0.4;
+    positions[i*3]   = Math.cos(angle) * radius;
+    positions[i*3+1] = (Math.random() - 0.5) * 0.6;
+    positions[i*3+2] = Math.sin(angle) * radius;
+    offsets[i] = Math.random();
+  }
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute("offset",   new THREE.BufferAttribute(offsets, 1));
+  const mat = new THREE.PointsMaterial({ color, size: 0.08, transparent: true, opacity: 0.7, sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const points = new THREE.Points(geo, mat);
+  points.visible = false;
+  points.userData = { active: false, target: null, label };
+  scene.add(points);
+  return points;
+}
+smellGroups.lavender = makeSmellCloud(0xb794f6, "lavender");
+smellGroups.apple    = makeSmellCloud(0xff6b6b, "apple");
+smellGroups.mint     = makeSmellCloud(0x5fd8d4, "mint");
+
+/* ──────────── Cocoon ──────────── */
+const cocoon = new THREE.Group();
+const cocoonGeo = new THREE.CapsuleGeometry(0.7, 1.6, 16, 32);
+const cocoonMat = new THREE.MeshStandardMaterial({ color: 0xc9a06a, roughness: 0.85, metalness: 0.1, transparent: true, opacity: 0 });
+const cocoonMesh = new THREE.Mesh(cocoonGeo, cocoonMat);
+cocoonMesh.rotation.z = Math.PI / 2;
+cocoon.add(cocoonMesh);
+cocoon.visible = false;
+scene.add(cocoon);
+
+/* ──────────── Dissolution particles (caterpillar → soup) ──────────── */
+const dissolveGroup = new THREE.Group();
+let dissolveParticles = null;
+function makeDissolveParticles() {
+  if (dissolveParticles) {
+    dissolveGroup.remove(dissolveParticles);
+    dissolveParticles.geometry.dispose();
+    dissolveParticles.material.dispose();
+  }
+  const N = 800;
+  const geo = new THREE.BufferGeometry();
+  const positions = new Float32Array(N * 3);
+  const velocities = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    // Distribute through caterpillar body bounds
+    positions[i*3]   = (Math.random() - 0.5) * 4;
+    positions[i*3+1] = (Math.random() - 0.5) * 0.6;
+    positions[i*3+2] = (Math.random() - 0.5) * 0.6;
+    // Drift inward (toward butterfly center)
+    velocities[i*3]   = -positions[i*3]   * 0.005;
+    velocities[i*3+1] = -positions[i*3+1] * 0.005;
+    velocities[i*3+2] = -positions[i*3+2] * 0.005;
+  }
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({
+    color: 0x9bcb3c, size: 0.05, transparent: true, opacity: 0.85,
+    sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  dissolveParticles = new THREE.Points(geo, mat);
+  dissolveParticles.userData = { velocities, age: 0 };
+  dissolveGroup.add(dissolveParticles);
+}
+scene.add(dissolveGroup);
+
+/* ──────────── Butterfly — procedural wings ──────────── */
+const butterfly = new THREE.Group();
+
+function makeWingShape() {
+  // Bezier butterfly wing outline
+  const s = new THREE.Shape();
+  s.moveTo(0, 0);
+  s.bezierCurveTo(0.4, 1.6,  1.8, 1.8,  2.2, 0.6);
+  s.bezierCurveTo(2.5, -0.2, 2.0, -1.0, 1.2, -1.0);
+  s.bezierCurveTo(0.6, -1.0, 0.2, -0.5, 0, 0);
+  return s;
+}
+
+const wingShape = makeWingShape();
+const wingGeo   = new THREE.ShapeGeometry(wingShape, 32);
+wingGeo.computeBoundingBox();
+const wingMat   = new THREE.MeshStandardMaterial({
+  color: 0xff8c42,
+  emissive: 0x442010,
+  roughness: 0.5,
+  metalness: 0.1,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0,
+});
+
+const leftWing = new THREE.Mesh(wingGeo, wingMat);
+leftWing.position.set(0, 0, 0);
+butterfly.add(leftWing);
+
+const rightWing = new THREE.Mesh(wingGeo, wingMat);
+rightWing.scale.x = -1;
+butterfly.add(rightWing);
+
+// Body (small black capsule between wings)
+const bodyMat  = new THREE.MeshStandardMaterial({ color: 0x2a1810, roughness: 0.4, transparent: true, opacity: 0 });
+const bodyGeo  = new THREE.CapsuleGeometry(0.08, 0.6, 8, 16);
+const bfBody   = new THREE.Mesh(bodyGeo, bodyMat);
+bfBody.rotation.x = Math.PI / 2;
+butterfly.add(bfBody);
+
+butterfly.visible = false;
+butterfly.position.y = 0;
+scene.add(butterfly);
+
+// Position imaginal cells in butterfly wings (mirrored on each side)
+function placeImaginalInButterfly() {
+  // Each cell gets a wing position
+  const wingPositions = [];
+  for (let i = 0; i < IMAGINAL_COUNT; i++) {
+    const side = i < IMAGINAL_COUNT / 2 ? 1 : -1;
+    const idx = i % (IMAGINAL_COUNT / 2);
+    // Spread within wing roughly
+    const x = side * (0.5 + idx * 0.3 + Math.random() * 0.2);
+    const y = -0.3 + Math.random() * 1.4;
+    const z = 0.05;
+    wingPositions.push(new THREE.Vector3(x, y, z));
+  }
+  return wingPositions;
+}
+
+/* ──────────── State machine ──────────── */
+const STEPS = [
+  {
+    label: "Step 1 of 6 — caterpillar",
+    title: "Meet a caterpillar",
+    text:  "Inside this little crawly body are tiny glowing dots. Scientists call them <strong>imaginal cells</strong>. Every caterpillar has them. They're the seeds of who the caterpillar will become.",
+    onEnter: stepCaterpillar,
+    controls: [],
+  },
+  {
+    label: "Step 2 of 6 — teach it",
+    title: "Teach the caterpillar",
+    text:  "Pick a smell. Wave it at the caterpillar. If we wave a SMELL with a tiny ZAP at the same time, the caterpillar will learn: <em>this smell = bad, avoid.</em>",
+    onEnter: stepTeach,
+    controls: ["smells"],
+  },
+  {
+    label: "Step 3 of 6 — cocoon",
+    title: "Into the cocoon",
+    text:  "Now the caterpillar wraps itself up. Inside the cocoon, almost the entire body <strong>melts into soup</strong>. But the imaginal cells survive. They're the only things that remember.",
+    onEnter: stepCocoon,
+    controls: ["start-cocoon"],
+  },
+  {
+    label: "Step 4 of 6 — emerge",
+    title: "A brand new butterfly",
+    text:  "Out comes a butterfly. New body. New wings. Same imaginal cells, glowing in new positions. Wave the smell at it now and watch what happens.",
+    onEnter: stepEmerge,
+    controls: ["test-butterfly"],
+  },
+  {
+    label: "Step 5 of 6 — children",
+    title: "It even passes down",
+    text:  "When this butterfly has babies, the children carry the same memory. They've never met the smell, but they avoid it too. <em>Memory survives across generations.</em> A 10-year-old in Japan named Jo Nagai proved this in 2026.",
+    onEnter: stepChildren,
+    controls: [],
+  },
+  {
+    label: "Step 6 of 6 — robots too",
+    title: "We taught a robot to do this",
+    text:  "When a robot has too long a conversation, it has to <strong>throw stuff away</strong>. A lazy robot throws away the oldest stuff. A butterfly-robot tags what's important first, then keeps only those tagged bits. Ask it about something old — the butterfly-robot remembers. The lazy robot doesn't. Same trick. Different body.",
+    onEnter: stepRobot,
+    controls: [],
+  },
+];
+
+let currentStep = 0;
+let learnedSmell = null;     // which color the imaginal cells learned
+let learnedCellIdx = -1;     // which cell got bright
+let cocoonProgress = 0;      // 0..1 transition
+let inCocoon = false;
+let dissolutionAge = 0;
+let butterflyEmerging = false;
+let emergeProgress = 0;
+let bfImaginalTargets = [];
+
+const narratorEl = document.getElementById("narrator");
+const narrTitle  = document.getElementById("narr-title");
+const narrText   = document.getElementById("narr-text");
+const sceneLabel = document.getElementById("scene-label");
+const controlsEl = document.getElementById("controls");
+const dotsEl     = document.querySelectorAll(".dot");
+const backBtn    = document.getElementById("back-btn");
+const nextBtn    = document.getElementById("next-btn");
+const tooltip    = document.getElementById("tooltip");
+
+function updateUI() {
+  const s = STEPS[currentStep];
+  narrTitle.innerHTML = s.title;
+  narrText.innerHTML = s.text;
+  sceneLabel.textContent = s.label;
+  dotsEl.forEach((d, i) => {
+    d.classList.toggle("active", i === currentStep);
+    d.classList.toggle("done", i < currentStep);
+  });
+  backBtn.disabled = currentStep === 0;
+  nextBtn.disabled = currentStep === STEPS.length - 1;
+  nextBtn.textContent = currentStep === STEPS.length - 1 ? "Done ✓" : "Next →";
+
+  // Build controls
+  controlsEl.innerHTML = "";
+  for (const ctrl of s.controls) {
+    if (ctrl === "smells") {
+      const labels = [["lavender", "🌸 Lavender"], ["apple", "🍎 Apple"], ["mint", "🌿 Mint"]];
+      labels.forEach(([key, lbl]) => {
+        const b = document.createElement("button");
+        b.className = "btn smell";
+        b.textContent = lbl;
+        b.onclick = () => teachSmell(key);
+        controlsEl.appendChild(b);
+      });
+    } else if (ctrl === "start-cocoon") {
+      const b = document.createElement("button");
+      b.className = "btn primary";
+      b.textContent = "🐛 Start the cocoon";
+      b.onclick = startCocoon;
+      controlsEl.appendChild(b);
+    } else if (ctrl === "test-butterfly") {
+      const b = document.createElement("button");
+      b.className = "btn primary";
+      b.textContent = `🌸 Wave the ${learnedSmell || "smell"} at the butterfly`;
+      b.onclick = testButterfly;
+      controlsEl.appendChild(b);
+    }
+  }
+}
+
+/* ──────────── Step entry handlers ──────────── */
+
+function stepCaterpillar() {
+  caterpillar.visible = true;
+  cocoon.visible = false;
+  butterfly.visible = false;
+  dissolveGroup.visible = false;
+  caterpillar.position.set(0, 0, 0);
+  caterpillar.scale.set(1, 1, 1);
+  // Reset cells
+  imaginal.forEach(c => {
+    c.material.color.copy(COLORS.dim);
+    c.userData.halo.material.color.copy(COLORS.dim);
+    c.userData.brightness = 1;
+    c.scale.set(1, 1, 1);
+  });
+  Object.values(smellGroups).forEach(g => g.visible = false);
+  cameraTarget.set(0, 1.2, 8);
+}
+
+function stepTeach() {
+  // Same scene, smells become available
+  caterpillar.visible = true;
+}
+
+function teachSmell(smell) {
+  // Wave the smell cloud at the caterpillar, then ZAP one cell to glow that color
+  const cloud = smellGroups[smell];
+  cloud.position.set(-3, 1.5, 0);
+  cloud.visible = true;
+  cloud.userData.active = true;
+  cloud.userData.target = caterpillar.position.clone();
+  cloud.userData.startedAt = performance.now();
+
+  // After 1.4s, "zap" — pick an imaginal cell, recolor it
+  setTimeout(() => {
+    learnedSmell = smell;
+    // Pick the most-central cell
+    const idx = Math.floor(IMAGINAL_COUNT / 2);
+    learnedCellIdx = idx;
+    const c = imaginal[idx];
+    c.material.color.copy(COLORS[smell]);
+    c.userData.halo.material.color.copy(COLORS[smell]);
+    c.userData.halo.material.opacity = 0.45;
+    c.userData.brightness = 3;
+    c.scale.set(1.6, 1.6, 1.6);
+    // Brief shake
+    caterpillar.userData.shake = 0.6;
+    // Fade smell
+    setTimeout(() => { cloud.userData.active = false; }, 800);
+    // Update narrator with feedback
+    narrTitle.innerHTML = `Caterpillar learned: ${smell} = bad`;
+    narrText.innerHTML = `One imaginal cell just lit up. That's the memory. The caterpillar now <strong>knows</strong>. Click <em>Next</em> to send it into the cocoon.`;
+  }, 1400);
+}
+
+function stepCocoon() {
+  caterpillar.visible = true;
+  butterfly.visible = false;
+  cocoon.visible = false;
+  Object.values(smellGroups).forEach(g => g.visible = false);
+  cameraTarget.set(0, 0.5, 6);
+}
+
+function startCocoon() {
+  inCocoon = true;
+  cocoonProgress = 0;
+  cocoon.visible = true;
+  cocoon.position.copy(caterpillar.position);
+  // Reveal cocoon, hide caterpillar shape; keep imaginal cells visible inside
+  makeDissolveParticles();
+  dissolveGroup.position.copy(caterpillar.position);
+  dissolveGroup.visible = true;
+  dissolutionAge = 0;
+  // After dissolution, advance narration
+  setTimeout(() => {
+    narrTitle.innerHTML = "Body becomes soup";
+    narrText.innerHTML = "Look — the caterpillar shape is gone. Particles drifting. But the imaginal cells are still there, glowing. Especially the one we taught.";
+  }, 2400);
+}
+
+function stepEmerge() {
+  caterpillar.visible = false;
+  cocoon.visible = false;
+  dissolveGroup.visible = false;
+  butterfly.visible = true;
+  butterflyEmerging = true;
+  emergeProgress = 0;
+  bfImaginalTargets = placeImaginalInButterfly();
+  // Detach imaginal cells from caterpillar group, attach to scene at world position
+  imaginal.forEach((c, i) => {
+    const worldPos = new THREE.Vector3();
+    c.getWorldPosition(worldPos);
+    caterpillar.remove(c);
+    scene.add(c);
+    c.position.copy(worldPos);
+    c.userData.targetPos = bfImaginalTargets[i].clone().add(butterfly.position);
+  });
+  cameraTarget.set(0, 0.5, 6.5);
+}
+
+function testButterfly() {
+  // Wave the learned smell at the butterfly — butterfly recoils
+  const cloud = smellGroups[learnedSmell];
+  cloud.position.set(-3, 0.5, 0);
+  cloud.visible = true;
+  cloud.userData.active = true;
+  cloud.userData.target = butterfly.position.clone();
+  cloud.userData.startedAt = performance.now();
+  // Butterfly flees!
+  butterfly.userData.fleeing = true;
+  butterfly.userData.fleeStartedAt = performance.now();
+  setTimeout(() => {
+    narrTitle.innerHTML = "She remembered.";
+    narrText.innerHTML = `New body. New wings. <strong>Same memory.</strong> The butterfly avoided the smell — exactly the way the caterpillar learned to.`;
+    cloud.userData.active = false;
+  }, 2200);
+}
+
+function stepChildren() {
+  // Show two small caterpillars in the scene with dimmer copies of the bright cell
+  butterfly.visible = true;
+  // Add two child caterpillars if not already
+  if (!scene.userData.children) {
+    const childGroup = new THREE.Group();
+    [-2, 2].forEach((x, i) => {
+      const child = caterpillar.clone(true);
+      child.scale.set(0.5, 0.5, 0.5);
+      child.position.set(x, -2, 0);
+      // Tint the analogous cell dimly purple
+      child.children.forEach(m => {
+        if (m.material && m.material.emissive !== undefined) {
+          m.material = m.material.clone();
+        }
+      });
+      childGroup.add(child);
+    });
+    scene.add(childGroup);
+    scene.userData.children = childGroup;
+  } else {
+    scene.userData.children.visible = true;
+  }
+  cameraTarget.set(0, -0.5, 9);
+}
+
+function stepRobot() {
+  // Hide all bio elements, switch to a stylised words-flow visual
+  caterpillar.visible = false;
+  cocoon.visible = false;
+  butterfly.visible = true;
+  if (scene.userData.children) scene.userData.children.visible = false;
+  if (!scene.userData.robotWords) buildRobotScene();
+  scene.userData.robotWords.visible = true;
+  cameraTarget.set(0, 0.5, 7);
+}
+
+function buildRobotScene() {
+  // Visual: floating words. The "important" word stays bright + persistent.
+  const group = new THREE.Group();
+  const words = ["a@b.com", "ok", "thanks", "hi", "Sarah owns jwt-utils", "lgtm", "let's", "sure", "cool", "right"];
+  const positions = [
+    [-3.2, 1.5, 0], [-1.8, 1.8, 0], [-0.4, 1.4, 0], [1.0, 1.7, 0], [2.4, 1.5, 0],
+    [-2.5, 0.3, 0], [-1.0, 0.0, 0], [0.6, 0.2, 0], [2.0, -0.1, 0], [3.2, 0.4, 0],
+  ];
+  for (let i = 0; i < words.length; i++) {
+    const isImportant = i === 4; // "Sarah owns jwt-utils"
+    const tex = makeTextTexture(words[i], isImportant ? "#ffd93d" : "#faf6e9");
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: isImportant ? 1 : 0.55 });
+    const aspect = tex.image.width / tex.image.height;
+    const h = 0.45;
+    const geo = new THREE.PlaneGeometry(h * aspect, h);
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(...positions[i]);
+    m.userData = { important: isImportant, baseY: positions[i][1] };
+    group.add(m);
+  }
+  scene.add(group);
+  scene.userData.robotWords = group;
+}
+
+function makeTextTexture(text, color) {
+  const dpr = 2;
+  const canv = document.createElement("canvas");
+  const ctx = canv.getContext("2d");
+  const fontSize = 48 * dpr;
+  ctx.font = `${fontSize}px -apple-system, system-ui, sans-serif`;
+  const w = Math.ceil(ctx.measureText(text).width) + 40 * dpr;
+  const h = fontSize + 24 * dpr;
+  canv.width = w; canv.height = h;
+  const ctx2 = canv.getContext("2d");
+  ctx2.font = `${fontSize}px -apple-system, system-ui, sans-serif`;
+  ctx2.fillStyle = color;
+  ctx2.textBaseline = "middle";
+  ctx2.fillText(text, 20 * dpr, h / 2);
+  const tex = new THREE.CanvasTexture(canv);
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
+}
+
+/* ──────────── Camera animation ──────────── */
+const cameraTarget = new THREE.Vector3(0, 1.2, 8);
+const lookTarget   = new THREE.Vector3(0, 0, 0);
+
+/* ──────────── Animation loop ──────────── */
+const clock = new THREE.Clock();
+
+function animate() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t  = clock.getElapsedTime();
+
+  // Camera lerp
+  camera.position.lerp(cameraTarget, 1 - Math.pow(0.001, dt));
+  camera.lookAt(lookTarget);
+
+  // Caterpillar wiggle (when visible & not in cocoon)
+  if (caterpillar.visible && !inCocoon) {
+    segMeshes.forEach((m, i) => {
+      m.position.y = Math.sin(t * 2 + i * 0.6) * 0.05;
+    });
+    if (caterpillar.userData.shake > 0) {
+      caterpillar.position.x = (Math.random() - 0.5) * caterpillar.userData.shake * 0.3;
+      caterpillar.userData.shake -= dt * 1.5;
+      if (caterpillar.userData.shake < 0) {
+        caterpillar.userData.shake = 0;
+        caterpillar.position.x = 0;
+      }
+    }
+  }
+
+  // Imaginal cells gentle pulse
+  imaginal.forEach((c, i) => {
+    const pulse = 1 + Math.sin(t * 3 + i * 0.7) * 0.1;
+    c.userData.halo.scale.setScalar(pulse);
+    if (c.userData.targetPos) {
+      c.position.lerp(c.userData.targetPos, 1 - Math.pow(0.005, dt));
+    }
+  });
+
+  // Smell clouds drift toward target
+  for (const key of Object.keys(smellGroups)) {
+    const cloud = smellGroups[key];
+    if (!cloud.userData.active) continue;
+    const elapsed = (performance.now() - cloud.userData.startedAt) / 1000;
+    cloud.position.lerp(cloud.userData.target, 1 - Math.pow(0.05, dt));
+    // Fade in then out
+    const fade = elapsed < 1 ? Math.min(1, elapsed) : Math.max(0, 1 - (elapsed - 1.5) * 1.5);
+    cloud.material.opacity = 0.7 * fade;
+    cloud.rotation.y += dt;
+  }
+
+  // Cocoon transition
+  if (inCocoon) {
+    cocoonProgress = Math.min(1, cocoonProgress + dt * 0.6);
+    cocoonMat.opacity = cocoonProgress * 0.85;
+    // Hide caterpillar segments progressively
+    segMeshes.forEach(m => {
+      m.material.opacity = 1 - cocoonProgress;
+      m.material.transparent = true;
+    });
+    // Animate dissolution
+    dissolutionAge += dt;
+    if (dissolveParticles) {
+      const pos = dissolveParticles.geometry.attributes.position.array;
+      const vel = dissolveParticles.userData.velocities;
+      for (let i = 0; i < pos.length / 3; i++) {
+        pos[i*3]   += vel[i*3]   + (Math.random() - 0.5) * 0.005;
+        pos[i*3+1] += vel[i*3+1] + (Math.random() - 0.5) * 0.005;
+        pos[i*3+2] += vel[i*3+2] + (Math.random() - 0.5) * 0.005;
+      }
+      dissolveParticles.geometry.attributes.position.needsUpdate = true;
+      dissolveParticles.material.opacity = Math.max(0, 0.85 - dissolutionAge * 0.2);
+    }
+  }
+
+  // Butterfly emerge + wing flap
+  if (butterfly.visible) {
+    if (butterflyEmerging) {
+      emergeProgress = Math.min(1, emergeProgress + dt * 0.5);
+      wingMat.opacity = emergeProgress;
+      bodyMat.opacity = emergeProgress;
+      if (emergeProgress >= 1) butterflyEmerging = false;
+    }
+    // Wing flap
+    const flap = Math.sin(t * 6) * 0.6;
+    leftWing.rotation.y = flap;
+    rightWing.rotation.y = -flap;
+    // Floating
+    butterfly.position.y = 0.3 + Math.sin(t * 1.2) * 0.15;
+    // Fleeing the smell
+    if (butterfly.userData.fleeing) {
+      const elapsed = (performance.now() - butterfly.userData.fleeStartedAt) / 1000;
+      if (elapsed < 1.5) {
+        butterfly.position.x = Math.min(3.5, butterfly.position.x + dt * 2.5);
+      } else {
+        butterfly.position.x *= 1 - dt * 0.5;
+        if (Math.abs(butterfly.position.x) < 0.05) {
+          butterfly.userData.fleeing = false;
+          butterfly.position.x = 0;
+        }
+      }
+    }
+  }
+
+  // Robot scene words floating
+  if (scene.userData.robotWords && scene.userData.robotWords.visible) {
+    scene.userData.robotWords.children.forEach((m, i) => {
+      m.position.y = m.userData.baseY + Math.sin(t * 1.3 + i) * 0.08;
+      if (m.userData.important) {
+        m.material.color.setHSL(0.13, 1, 0.5 + Math.sin(t * 4) * 0.15);
+        m.scale.setScalar(1 + Math.sin(t * 4) * 0.05);
+      } else {
+        m.material.opacity = 0.35 + Math.sin(t * 0.8 + i) * 0.15;
+      }
+    });
+  }
+
+  composer.render();
+  requestAnimationFrame(animate);
+}
+
+/* ──────────── Resize ──────────── */
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ──────────── UI bindings ──────────── */
+document.getElementById("start-btn").onclick = () => {
+  document.getElementById("intro").classList.add("gone");
+  setTimeout(() => document.getElementById("intro").style.display = "none", 800);
+  STEPS[0].onEnter();
+  updateUI();
+};
+nextBtn.onclick = () => {
+  if (currentStep < STEPS.length - 1) {
+    currentStep++;
+    STEPS[currentStep].onEnter();
+    updateUI();
+  }
+};
+backBtn.onclick = () => {
+  if (currentStep > 0) {
+    currentStep--;
+    STEPS[currentStep].onEnter();
+    updateUI();
+  }
+};
+dotsEl.forEach(d => d.onclick = () => {
+  const i = Number(d.dataset.step);
+  // Walk forward step by step (so onEnter fires for each)
+  while (currentStep < i) { currentStep++; STEPS[currentStep].onEnter(); }
+  while (currentStep > i) { currentStep--; STEPS[currentStep].onEnter(); }
+  updateUI();
+});
+
+/* ──────────── Tooltip on hover ──────────── */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+window.addEventListener("mousemove", (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(imaginal);
+  if (hits.length > 0) {
+    const cell = hits[0].object;
+    const isLearned = cell.userData.brightness > 1;
+    tooltip.textContent = isLearned ? `imaginal cell — knows: ${learnedSmell} = bad` : "imaginal cell";
+    tooltip.style.left = e.clientX + "px";
+    tooltip.style.top = e.clientY + "px";
+    tooltip.classList.add("visible");
+  } else {
+    tooltip.classList.remove("visible");
+  }
+});
+
+animate();
+</script>
+</body>
+</html>

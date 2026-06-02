@@ -1,11 +1,16 @@
 {
   "name": "butterfly",
-  "version": "0.0.1",
-  "description": "Falsifier: does a rebuilt (metamorphosed) context preserve facts as well as the full transcript?",
+  "version": "0.1.0",
+  "description": "Falsification study: a small-LLM tag-and-rebuild context-compaction mechanism is a content-shape adapter, not a universal context manager.",
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "node experiment.mjs"
+    "start": "node experiment.mjs",
+    "confirm": "node butterfly-purecode-hard.mjs",
+    "sweep": "node butterfly-sweep-phasediagram.mjs",
+    "taggers": "node butterfly-llm-tagger.mjs",
+    "adversarial": "node butterfly-adversarial.mjs",
+    "longmemeval": "node butterfly-longmemeval.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",

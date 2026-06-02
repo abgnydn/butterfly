@@ -1,0 +1,75 @@
+{
+  "id": "T19",
+  "topic": "null vs undefined check confusion — `if (x !== null)` letting undefined through",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 0,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1105
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 213
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 559
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 172
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 512
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 293
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1105
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 369
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 708
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 339
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 672
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 384
+    }
+  ],
+  "butterfly_answer": "`.toLowerCase()` was called on `handle` without checking if it existed first. The field was typed as optional (`handle?: string`) but the code assumed it was always present, so when it was `undefined`, the call threw a `TypeError`.",
+  "lastN_answer": "The prior context doesn't include that — it picks up mid-conversation after the root cause discussion had already happened. I don't have it.",
+  "needle_fact": "In `normalizeHandle` in src/components/UserProfile.tsx, the guard `if (handle !== null)` let `undefined` through because strict inequality `!==` against `null` does not cover `undefined`, so `.toLowerCase()` was called on `undefined`; the `Promise<any>` return type of `fetchUser` hid this from the type checker.",
+  "completed_at": "2026-04-24T19:19:44.821Z"
+}

@@ -1,0 +1,75 @@
+{
+  "id": "T26",
+  "topic": "timezone offset bug — date constructed in local time but compared in UTC",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1294
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 383
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 768
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 237
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 615
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 260
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1294
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 389
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 767
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 384
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 755
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 371
+    }
+  ],
+  "butterfly_answer": "The `bucketByDay` function was grouping events by UTC date instead of the report's local timezone. Events near midnight in Bangkok were falling into the wrong day because the key was derived from the UTC timestamp rather than the local wall-clock date.",
+  "lastN_answer": "The prior context doesn't identify a root cause for anything — the `--experimental-loader` warning was noted as pre-existing but not investigated. No diagnosis was reached.",
+  "needle_fact": "bucketByDay in src/reports/dailyBucket.js built the day key via new Date(ev.createdAt.getFullYear(), getMonth(), getDate()) then toISOString().slice(0,10); on a UTC server those getters return the UTC calendar date, so events were bucketed by UTC day but presented as the user's local day, causing a 7-hour spillover into the previous day for Bangkok users",
+  "completed_at": "2026-04-24T19:39:52.708Z"
+}

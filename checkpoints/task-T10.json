@@ -1,0 +1,75 @@
+{
+  "id": "T10",
+  "topic": "circular import causing temporal dead zone — module A imports B which imports A",
+  "question": "Quick reminder — what was the actual root cause?",
+  "butterfly": 1,
+  "lastN": 0,
+  "butterfly_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1288
+    },
+    {
+      "gen": 1,
+      "kind": "rebuilt",
+      "tokens": 274
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 641
+    },
+    {
+      "gen": 2,
+      "kind": "rebuilt",
+      "tokens": 322
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 600
+    },
+    {
+      "gen": 3,
+      "kind": "rebuilt",
+      "tokens": 308
+    }
+  ],
+  "lastN_trace": [
+    {
+      "gen": 0,
+      "kind": "initial",
+      "tokens": 1288
+    },
+    {
+      "gen": 1,
+      "kind": "truncated",
+      "tokens": 340
+    },
+    {
+      "gen": 1,
+      "kind": "after-noise",
+      "tokens": 700
+    },
+    {
+      "gen": 2,
+      "kind": "truncated",
+      "tokens": 360
+    },
+    {
+      "gen": 2,
+      "kind": "after-noise",
+      "tokens": 632
+    },
+    {
+      "gen": 3,
+      "kind": "truncated",
+      "tokens": 353
+    }
+  ],
+  "butterfly_answer": "Circular import between `services/auth.ts` and `models/user.ts`. A static field at `auth.ts:14` referenced `UserModel` at module evaluation time, but because of the cycle, `UserModel` hadn't been initialized yet — triggering a TDZ `ReferenceError`. esbuild's module ordering in the prod bundle expose",
+  "lastN_answer": "The prior context doesn't include a root cause — the conversation only covers cleanup decisions (console.logs, linter, error boundaries, etc.). Whatever the original issue was, it wasn't captured here.",
+  "needle_fact": "The static class field initializer `static defaultRole = UserModel.ROLES.GUEST` in services/auth.ts AuthService accessed UserModel across a circular import (auth.ts ↔ models/user.ts) during module evaluation; under esbuild's ESM semantics UserModel was still in its TDZ when the field initializer ran, throwing ReferenceError. CommonJS/ts-node hid it by returning partially-populated exports instead of enforcing TDZ.",
+  "completed_at": "2026-04-24T18:54:35.196Z"
+}
