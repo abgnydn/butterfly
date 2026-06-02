@@ -1,5 +1,7 @@
 # Butterfly
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20505472.svg)](https://doi.org/10.5281/zenodo.20505472)
+
 **A small-LLM context-compaction mechanism is a *content-shape adapter*, not a universal context manager.**
 
 Butterfly is a falsification study of a tag-and-rebuild context-compaction
@@ -56,6 +58,21 @@ home for the compaction harness and findings; neuropulse is the platform.
 
 Everything is pure JS with no build step. The embedding cache
 (`butterfly-embed-cache.json`) is gitignored and regenerated on first run.
+
+## Cite
+
+DOI: [10.5281/zenodo.20505472](https://doi.org/10.5281/zenodo.20505472) (concept — resolves to the latest version).
+
+```bibtex
+@software{gunaydin_butterfly_2026,
+  author  = {Günaydın, Ahmet Barış},
+  title   = {Butterfly: A Small-LLM Context-Compaction Mechanism is a
+             Content-Shape Adapter, Not a Universal Context Manager},
+  year    = {2026},
+  doi     = {10.5281/zenodo.20505472},
+  url     = {https://doi.org/10.5281/zenodo.20505472}
+}
+```
 
 ## License
 
