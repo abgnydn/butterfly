@@ -10,7 +10,8 @@
     "sweep": "node butterfly-sweep-phasediagram.mjs",
     "taggers": "node butterfly-llm-tagger.mjs",
     "adversarial": "node butterfly-adversarial.mjs",
-    "longmemeval": "node butterfly-longmemeval.mjs"
+    "longmemeval": "node butterfly-longmemeval.mjs",
+    "test": "node --test repro.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
